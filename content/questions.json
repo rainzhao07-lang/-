@@ -1,0 +1,120 @@
+[
+  {
+    "id": "q1",
+    "text": "周五晚上10点，你最可能在？",
+    "options": [
+      { "text": "家里沙发上，和自己待着", "weights": { "snow_hermit": 3, "old_manor_poet": 1 }, "flags": {} },
+      { "text": "刚回家，白天已经排满", "weights": { "city_observer": 3 }, "flags": {} },
+      { "text": "和两三好友小聚", "weights": { "velvet_commander": 2, "dawn_expeditioner": 2 }, "flags": {} },
+      { "text": "还在加班/学习，夜里才是我的时间", "weights": { "midnight_curator": 3 }, "flags": { "schedule": "busy" } }
+    ]
+  },
+  {
+    "id": "q2",
+    "text": "熟人聊起你，最常出现的评价是？",
+    "options": [
+      { "text": "「话不多，但特别靠谱」", "weights": { "harbor_keeper": 3, "snow_hermit": 1 }, "flags": {} },
+      { "text": "「有点神秘，越熟越好玩」", "weights": { "snow_hermit": 2, "midnight_curator": 2 }, "flags": {} },
+      { "text": "「行走的开心果」", "weights": { "dawn_expeditioner": 3 }, "flags": {} },
+      { "text": "「把身边人照顾得很好」", "weights": { "velvet_commander": 2, "dusk_weaver": 2 }, "flags": {} }
+    ]
+  },
+  {
+    "id": "q3",
+    "text": "难得的完整休息日，你的理想过法是？",
+    "options": [
+      { "text": "一本书或一部老电影，泡掉一下午", "weights": { "old_manor_poet": 3 }, "flags": {} },
+      { "text": "收拾房间，把生活捋顺", "weights": { "city_observer": 2, "velvet_commander": 1 }, "flags": {} },
+      { "text": "出门！爬山探店citywalk都行", "weights": { "dawn_expeditioner": 3 }, "flags": {} },
+      { "text": "什么都不干，瘫着回血", "weights": { "dusk_weaver": 2, "snow_hermit": 1 }, "flags": {} }
+    ]
+  },
+  {
+    "id": "q4",
+    "text": "烦心事找上门，你的第一反应是？",
+    "options": [
+      { "text": "自己消化，睡一觉就好", "weights": { "snow_hermit": 2, "harbor_keeper": 2 }, "flags": {} },
+      { "text": "拉着朋友说个痛快", "weights": { "dawn_expeditioner": 2, "velvet_commander": 1 }, "flags": {} },
+      { "text": "熬个夜，做点别的事转移注意力", "weights": { "midnight_curator": 3 }, "flags": {} },
+      { "text": "写下来，把思路捋清楚", "weights": { "city_observer": 2, "old_manor_poet": 2 }, "flags": {} }
+    ]
+  },
+  {
+    "id": "q5",
+    "text": "说实话，你平时几点睡？",
+    "options": [
+      { "text": "23点前，作息比闹钟还准", "weights": { "city_observer": 1 }, "flags": { "schedule": "regular" } },
+      { "text": "0点到1点，普通程度的晚", "weights": {}, "flags": { "schedule": "normal" } },
+      { "text": "凌晨2点后是常态", "weights": { "midnight_curator": 2 }, "flags": { "schedule": "night" } },
+      { "text": "轮班/出差，作息不由我", "weights": {}, "flags": { "schedule": "irregular" } }
+    ]
+  },
+  {
+    "id": "q6",
+    "text": "你现在（或准备养猫时）的居住空间是？",
+    "options": [
+      { "text": "合租房里的一间", "weights": {}, "flags": { "space": "small" } },
+      { "text": "独立小户型，一人天地", "weights": {}, "flags": { "space": "medium" } },
+      { "text": "两室以上，空间宽裕", "weights": {}, "flags": { "space": "large" } },
+      { "text": "带阳台/院子，猫的豪宅", "weights": {}, "flags": { "space": "large" } }
+    ]
+  },
+  {
+    "id": "q7",
+    "text": "关于掉毛，你的真实底线是？",
+    "options": [
+      { "text": "完全不能接受，我有洁癖", "weights": {}, "flags": { "shedding": "low" } },
+      { "text": "少量可以，定期打理没问题", "weights": {}, "flags": { "shedding": "mid" } },
+      { "text": "无所谓，粘毛器我有一打", "weights": {}, "flags": { "shedding": "high" } }
+    ]
+  },
+  {
+    "id": "q8",
+    "text": "你更想要哪种猫际关系？",
+    "options": [
+      { "text": "黏我，走哪跟哪的小尾巴", "weights": { "dusk_weaver": 2, "velvet_commander": 1 }, "flags": { "clinginess": "want_high" } },
+      { "text": "各自安好，偶尔贴贴", "weights": { "harbor_keeper": 2, "city_observer": 1 }, "flags": { "clinginess": "want_low" } },
+      { "text": "能疯能玩，互动拉满", "weights": { "dawn_expeditioner": 2, "midnight_curator": 1 }, "flags": { "clinginess": "want_play" } },
+      { "text": "像家人，顺其自然", "weights": { "old_manor_poet": 1, "snow_hermit": 1 }, "flags": { "clinginess": "flexible" } }
+    ]
+  },
+  {
+    "id": "q9",
+    "text": "每个月愿意为猫花多少（粮+砂+零食+杂项）？",
+    "options": [
+      { "text": "300以内，精打细算", "weights": {}, "flags": { "budget": "low" } },
+      { "text": "300-800，正常水平", "weights": {}, "flags": { "budget": "mid" } },
+      { "text": "800以上，它值得", "weights": {}, "flags": { "budget": "high" } }
+    ]
+  },
+  {
+    "id": "q10",
+    "text": "宅家的周末，你大概率在？",
+    "options": [
+      { "text": "研究新菜/捣鼓手工", "weights": { "velvet_commander": 2, "old_manor_poet": 1 }, "flags": {} },
+      { "text": "游戏/追剧，根本停不下来", "weights": { "midnight_curator": 2, "dusk_weaver": 1 }, "flags": {} },
+      { "text": "健身、学习，高效运转", "weights": { "city_observer": 2, "dawn_expeditioner": 1 }, "flags": {} },
+      { "text": "窗边发会儿呆，看看外面", "weights": { "harbor_keeper": 3 }, "flags": {} }
+    ]
+  },
+  {
+    "id": "q11",
+    "text": "你现在和谁一起住？",
+    "options": [
+      { "text": "一个人住", "weights": { "snow_hermit": 1 }, "flags": { "household": "alone" } },
+      { "text": "和伴侣", "weights": {}, "flags": { "household": "partner" } },
+      { "text": "和室友", "weights": {}, "flags": { "household": "roommates" } },
+      { "text": "和家人（家里可能有小孩/老人）", "weights": {}, "flags": { "household": "family" } }
+    ]
+  },
+  {
+    "id": "q12",
+    "text": "最后一题：选一个词，形容你想要的生活。",
+    "options": [
+      { "text": "「安静」", "weights": { "harbor_keeper": 2, "snow_hermit": 2 }, "flags": {} },
+      { "text": "「热闹」", "weights": { "dawn_expeditioner": 2, "velvet_commander": 2 }, "flags": {} },
+      { "text": "「自由」", "weights": { "midnight_curator": 2, "city_observer": 2 }, "flags": {} },
+      { "text": "「温柔」", "weights": { "dusk_weaver": 3, "old_manor_poet": 1 }, "flags": {} }
+    ]
+  }
+]
