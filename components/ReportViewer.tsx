@@ -12,25 +12,25 @@ export default function ReportViewer({ sessionId }: { sessionId: string }) {
   const targetRef = useRef("");
   const streamDoneRef = useRef(false);
   const startedRef = useRef(false);
+  const typeStartRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (startedRef.current) return; // 防 React StrictMode 双调用触发两次生成
-    startedRef.current = true;
-
-    let cancelled = false;
-
-    // 打字机:每帧追赶缓冲区,缓存命中时也有揭晓感
+    // 打字机计时器:每次挂载都要启动(StrictMode 会挂载→卸载→再挂载,
+    // cleanup 只清计时器;拉流则只启动一次,写入跨挂载存活的 targetRef)。
+    // 进度按"经过时间"计算而非每跳固定步进:页面切后台时浏览器会节流计时器,
+    // 回到前台的第一跳就能追平应显示的位置,不会出现慢动作残影。
+    const CHARS_PER_SECOND = 250;
     const timer = window.setInterval(() => {
+      const target = targetRef.current;
+      if (target.length === 0) return;
+      typeStartRef.current ??= Date.now();
+      const want = Math.ceil(((Date.now() - typeStartRef.current) / 1000) * CHARS_PER_SECOND);
       setDisplayed((prev) => {
-        const target = targetRef.current;
-        if (prev.length >= target.length) {
-          if (streamDoneRef.current && target.length > 0) {
-            window.clearInterval(timer);
-            setPhase("done");
-          }
-          return prev;
+        const nextLen = Math.min(target.length, Math.max(prev.length, want));
+        if (nextLen >= target.length && streamDoneRef.current) {
+          setPhase("done");
         }
-        return target.slice(0, prev.length + 6);
+        return nextLen === prev.length ? prev : target.slice(0, nextLen);
       });
     }, 24);
 
@@ -50,25 +50,21 @@ export default function ReportViewer({ sessionId }: { sessionId: string }) {
         const decoder = new TextDecoder();
         for (;;) {
           const { done, value } = await reader.read();
-          if (cancelled) return;
           if (done) break;
           targetRef.current += decoder.decode(value, { stream: true });
         }
         targetRef.current += decoder.decode();
         streamDoneRef.current = true;
       } catch {
-        if (!cancelled) {
-          window.clearInterval(timer);
-          setPhase("error");
-        }
+        setPhase("error");
       }
     }
-    void run();
+    if (!startedRef.current) {
+      startedRef.current = true; // 同一会话只触发一次生成,防止重复请求
+      void run();
+    }
 
-    return () => {
-      cancelled = true;
-      window.clearInterval(timer);
-    };
+    return () => window.clearInterval(timer);
   }, [sessionId]);
 
   if (phase === "error") {
