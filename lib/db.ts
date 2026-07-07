@@ -7,7 +7,7 @@
 //    多实例并发下也只有一个请求能拿到生成权;占位行超过 PENDING_TTL 视为
 //    生成方崩溃,允许接管。
 // 2. 基础设施错误(查询失败)绝不能吞成"缓存未命中",否则缓存层抖动会直接
-//    变成重复 LLM 计费——查询失败一律抛错,由路由层返回 503。
+//    变成重复生成与重复写入——查询失败一律抛错,由路由层返回 503。
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { HardFlags, PremiumFlags } from "./types";
 
@@ -50,7 +50,7 @@ export interface Db {
   insertCodes(codes: string[]): Promise<void>;
   /**
    * 抢占报告生成权(跨实例安全)。基础设施错误直接抛,调用方应返回 503,
-   * 绝不能把异常当成"无缓存"继续调 LLM。
+   * 绝不能把异常当成"无缓存"继续生成。
    */
   claimReportGeneration(sessionId: string): Promise<ReportClaim>;
   /** 生成成功:把占位行替换为正式内容 */

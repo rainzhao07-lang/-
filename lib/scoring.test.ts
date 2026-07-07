@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { buildReportMessages } from "@/content/prompts";
 import { breeds, breedByName, personas, questions } from "./content";
 import {
   accumulateScores,
@@ -153,19 +152,5 @@ describe("计分引擎", () => {
     });
     expect(ok.hasConflict).toBe(false);
     expect(ok.message).toBeUndefined();
-  });
-});
-
-describe("报告 Prompt", () => {
-  it("注入品种事实库、具体花费和冲突提示", () => {
-    const commander = personas.find((p) => p.id === "velvet_commander")!;
-    const breedFacts = breedByName(commander.primaryBreed.name)!;
-    const conflict = detectBreedConflict(commander, { budget: "low", shedding: "low", space: "small" });
-    const messages = buildReportMessages(commander, ["预算题 → 300以内，精打细算"], { budget: "low" }, breedFacts, conflict);
-
-    expect(messages.user).toContain("主粮300-600元");
-    expect(messages.user).toContain("肥厚型心肌病");
-    expect(messages.user).toContain("现实适配提示");
-    expect(messages.system).toContain("禁止只写");
   });
 });

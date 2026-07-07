@@ -115,7 +115,7 @@ export default function QuizFlow() {
         </div>
         <p className="text-lg font-medium">正在鉴定你的本命猫...</p>
         <p className="text-sm text-soft">
-          AI 正在核对 {questions.length} 道题的每一个细节
+          系统正在核对 {questions.length} 道题的每一个细节
         </p>
       </main>
     );

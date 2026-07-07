@@ -2,7 +2,7 @@
 // 评分规则:
 // 1. 累加所有选项 weights → 最高分 persona 胜出;平分时按 personas.json 顺序取先者
 // 2. 汇总所有 flags 为 hard_flags 对象(同名 key 后答的题覆盖先答的)
-//    硬条件不改变人格结果,但会触发现实适配提示并注入报告 Prompt
+//    硬条件不改变人格结果,但会触发现实适配提示并注入本地报告生成器
 import { breedByName, breeds as defaultBreeds, personas as defaultPersonas, questions as defaultQuestions } from "./content";
 import type { BreedConflict, BreedConflictType, BreedProfile, HardFlags, Persona, Question, ScoreResult } from "./types";
 

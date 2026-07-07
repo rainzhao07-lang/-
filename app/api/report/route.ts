@@ -1,19 +1,19 @@
 import { NextResponse } from "next/server";
 import { breedByName, personaById, questions } from "@/lib/content";
 import { db } from "@/lib/db";
-import { generateReportStream, llmModelName } from "@/lib/llm";
+import { generateLocalReportStream, localReportModelName } from "@/lib/local-report";
 import { hasPremiumFlags } from "@/lib/premium";
 import { detectBreedConflict } from "@/lib/scoring";
 
 export const runtime = "nodejs";
 
 /**
- * POST /api/report — 校验付费 → 抢占生成权(落库,跨实例安全)→ LLM 流式生成并写缓存
+ * POST /api/report — 校验付费 → 抢占生成权(落库,跨实例安全)→ 本地规则生成并写缓存
  *
- * 计费安全设计(Codex review P1 的修复):
- * - 生成锁 = reports 表占位行的原子插入,同一 session 全局只有一个请求能触发 LLM;
- *   其余请求收到 409,由前端轮询等待缓存就绪
- * - 数据库故障一律 503,绝不把故障当"缓存未命中"去调 LLM
+ * 缓存安全设计:
+ * - 生成锁 = reports 表占位行的原子插入,同一 session 全局只有一个请求能写报告;
+ *   其余请求收到 409,由前端轮询等待缓存就绪。
+ * - 数据库故障一律 503,绝不把故障当"缓存未命中"继续生成。
  * - 客户端中途断开不中止生成:服务端把流跑完并写缓存,用户刷新即命中缓存
  */
 export async function POST(req: Request) {
@@ -77,7 +77,7 @@ export async function POST(req: Request) {
         let fullText = "";
         let clientGone = false;
         try {
-          for await (const delta of generateReportStream({
+          for await (const delta of generateLocalReportStream({
             sessionId,
             persona,
             answersSummary,
@@ -98,7 +98,7 @@ export async function POST(req: Request) {
             }
           }
           if (fullText.trim().length > 0) {
-            await db.finishReport({ sessionId, content: fullText, model: llmModelName() });
+            await db.finishReport({ sessionId, content: fullText, model: localReportModelName() });
           } else {
             await db.releaseReportClaim(sessionId);
           }
