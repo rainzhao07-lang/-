@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import ReportViewer from "@/components/ReportViewer";
+import SiteFooter from "@/components/SiteFooter";
 import { personaById } from "@/lib/content";
 import { db } from "@/lib/db";
 import { canGeneratePaidReport } from "@/lib/premium";
@@ -55,10 +56,10 @@ export default async function ReportPage({
         </Link>
       </section>
 
-      <footer className="space-y-2 pb-4 text-center text-xs leading-relaxed text-soft/80">
-        <p>领养代替购买。这些性格特质，田园猫中同样存在。</p>
-        <p>本报告为参考建议。若遇到兑换或生成异常，请保留订单截图联系客服处理。</p>
-      </footer>
+      <p className="text-center text-xs text-soft/70">
+        若遇到兑换或生成异常，请保留订单截图联系客服处理。
+      </p>
+      <SiteFooter />
     </main>
   );
 }

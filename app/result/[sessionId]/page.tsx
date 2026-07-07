@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import RedeemBox from "@/components/RedeemBox";
+import SiteFooter from "@/components/SiteFooter";
 import { personaById } from "@/lib/content";
 import { db } from "@/lib/db";
 import { paymentProvider } from "@/lib/payment/code-redemption";
@@ -81,10 +82,7 @@ export default async function ResultPage({
         breedName={persona.primaryBreed.name}
       />
 
-      <footer className="space-y-2 pb-4 text-center text-xs leading-relaxed text-soft/80">
-        <p>领养代替购买。这些性格特质，田园猫中同样存在。</p>
-        <p>本结果为参考建议，每只猫都是独立的个体。</p>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }

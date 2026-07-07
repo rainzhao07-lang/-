@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SiteFooter from "@/components/SiteFooter";
 
 export default function LandingPage() {
   return (
@@ -44,12 +45,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <footer className="mt-10 space-y-2 text-center text-xs leading-relaxed text-soft/80">
-        <p>我们倡导领养代替购买。报告中的性格特质，田园猫中同样存在。</p>
-        <p id="disclaimer">
-          本测试与报告均为参考建议，不构成任何专业意见；每只猫都是独立的个体。
-        </p>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }
