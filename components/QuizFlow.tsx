@@ -129,12 +129,13 @@ export default function QuizFlow() {
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-milk">
         <div
-          className="h-full rounded-full bg-accent transition-all duration-300"
+          className="h-full rounded-full bg-accent transition-[width] duration-500 ease-out"
           style={{ width: `${progress}%` }}
         />
       </div>
 
-      <section className="mt-10 flex flex-1 flex-col">
+      {/* key=question.id:每换一题就重挂载,重新触发进场动画,消除硬切 */}
+      <section key={question.id} className="anim-q mt-10 flex flex-1 flex-col">
         <h2 className="text-xl font-bold leading-relaxed">{question.text}</h2>
         <div className="mt-8 flex flex-col gap-3">
           {question.options.map((opt, i) => (
@@ -142,7 +143,8 @@ export default function QuizFlow() {
               key={i}
               onClick={() => handleSelect(i)}
               disabled={submitting}
-              className="rounded-card border border-ink/10 bg-white px-5 py-4 text-left text-base leading-relaxed shadow-sm transition active:scale-[0.98] active:border-accent active:bg-milk disabled:opacity-60"
+              style={{ animationDelay: `${0.08 + i * 0.055}s` }}
+              className="anim-opt rounded-card border border-ink/10 bg-white px-5 py-4 text-left text-base leading-relaxed shadow-sm transition duration-150 ease-out hover:-translate-y-0.5 hover:border-accent/50 hover:shadow-md active:scale-[0.98] active:border-accent active:bg-milk disabled:opacity-60"
             >
               {opt.text}
             </button>

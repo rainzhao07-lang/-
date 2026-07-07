@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { questions } from "@/lib/content";
 
 export default function LandingPage() {
   return (
@@ -9,8 +8,8 @@ export default function LandingPage() {
       </header>
 
       <section className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
-        <div className="anim-fade-up text-6xl" aria-hidden>
-          🐈
+        <div className="anim-fade-up cat-glow" aria-hidden>
+          <span className="anim-float text-6xl">🐈</span>
         </div>
         <h1 className="anim-fade-up-delay-1 text-3xl font-bold leading-snug">
           测测你内心
@@ -31,22 +30,18 @@ export default function LandingPage() {
           <Link
             href="/quiz"
             prefetch
-            className="w-full rounded-full bg-accent py-4 text-center text-lg font-bold text-white shadow-lg shadow-accent/30 transition active:scale-95"
+            className="w-full rounded-full bg-accent py-4 text-center text-lg font-bold text-white shadow-lg shadow-accent/30 transition duration-150 ease-out hover:-translate-y-0.5 hover:shadow-xl hover:shadow-accent/40 active:scale-95"
           >
             开始免费测试
           </Link>
           <Link
             href="/redeem"
             prefetch
-            className="w-full rounded-full border border-accent/40 bg-white py-3 text-center text-sm font-bold text-accentDeep active:scale-95"
+            className="w-full rounded-full border border-accent/40 bg-white py-3 text-center text-sm font-bold text-accentDeep transition duration-150 ease-out hover:-translate-y-0.5 hover:border-accent active:scale-95"
           >
             我已有兑换码
           </Link>
         </div>
-
-        <p className="anim-fade-up-delay-3 text-xs text-soft">
-          {questions.length} 道题 · 约 3 分钟 · 无需注册
-        </p>
       </section>
 
       <footer className="mt-10 space-y-2 text-center text-xs leading-relaxed text-soft/80">

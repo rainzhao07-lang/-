@@ -4,39 +4,56 @@
 
 :root {
   color-scheme: light;
+  /* 统一缓动:spring 带轻微回弹(高级感/高帧感),soft 是顺滑收尾 */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 body {
   /* 全站系统字体栈:零外部字体请求,国内加载快 */
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
     "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  position: relative;
 }
 
-/* ---------- 动效层 ---------- */
+/* 温暖氛围背景:几团柔和暖光,固定不随滚动,极低透明度,只做治愈底噪 */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(58% 42% at 50% -4%, rgba(217, 126, 69, 0.11), transparent 72%),
+    radial-gradient(52% 40% at 104% 102%, rgba(201, 123, 109, 0.09), transparent 72%),
+    radial-gradient(46% 36% at -4% 78%, rgba(176, 137, 98, 0.08), transparent 72%);
+}
+
+/* ---------- keyframes ---------- */
 
 @keyframes fade-up {
   from {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translate3d(0, 14px, 0);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 }
 
 @keyframes bubble-in {
   0% {
     opacity: 0;
-    transform: translateY(10px) scale(0.92);
+    transform: translate3d(0, 10px, 0) scale(0.92);
   }
   60% {
     opacity: 1;
-    transform: translateY(-2px) scale(1.02);
+    transform: translate3d(0, -2px, 0) scale(1.02);
   }
   100% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: none;
   }
 }
 
@@ -51,7 +68,55 @@ body {
   }
   100% {
     opacity: 1;
-    transform: scale(1);
+    transform: none;
+  }
+}
+
+/* 页面进场:每次路由切换,新页整体柔和升起淡入(template.tsx 触发) */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0) scale(0.988);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* 答题:每题从右侧轻轻滑入,像翻卡片,方向感 = 在前进 */
+@keyframes q-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(24px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* 猫咪漂浮:持续微动,让页面"活着"= 高帧感 */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-9px);
+  }
+}
+
+/* 猫咪身后暖光呼吸 */
+@keyframes glow-breathe {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1.12);
   }
 }
 
@@ -65,28 +130,77 @@ body {
   }
 }
 
+/* ---------- 进场动画(用 backwards 填充:结束回落自然态,不残留 transform,
+     避免 fixed 定位被祖先 transform 劫持) ---------- */
+
 .anim-fade-up {
-  animation: fade-up 0.35s ease-out both;
-}
-
-.anim-bubble {
-  animation: bubble-in 0.4s cubic-bezier(0.22, 1.2, 0.36, 1) both;
-}
-
-.anim-reveal {
-  animation: reveal-pop 0.6s cubic-bezier(0.22, 1.2, 0.36, 1) both;
+  animation: fade-up 0.5s var(--ease-soft) backwards;
+  will-change: transform, opacity;
 }
 
 .anim-fade-up-delay-1 {
-  animation: fade-up 0.4s ease-out 0.15s both;
+  animation: fade-up 0.5s var(--ease-soft) 0.12s backwards;
+  will-change: transform, opacity;
 }
 
 .anim-fade-up-delay-2 {
-  animation: fade-up 0.4s ease-out 0.3s both;
+  animation: fade-up 0.5s var(--ease-soft) 0.24s backwards;
+  will-change: transform, opacity;
 }
 
 .anim-fade-up-delay-3 {
-  animation: fade-up 0.4s ease-out 0.45s both;
+  animation: fade-up 0.5s var(--ease-soft) 0.36s backwards;
+  will-change: transform, opacity;
+}
+
+.anim-bubble {
+  animation: bubble-in 0.42s var(--ease-spring) backwards;
+  will-change: transform, opacity;
+}
+
+.anim-reveal {
+  animation: reveal-pop 0.6s var(--ease-spring) backwards;
+  will-change: transform, opacity;
+}
+
+.page-enter {
+  animation: page-enter 0.5s var(--ease-soft) backwards;
+  will-change: transform, opacity;
+}
+
+.anim-q {
+  animation: q-enter 0.4s var(--ease-spring) backwards;
+  will-change: transform, opacity;
+}
+
+.anim-opt {
+  animation: fade-up 0.44s var(--ease-soft) backwards;
+  will-change: transform, opacity;
+}
+
+/* 持续微动 */
+.anim-float {
+  animation: float 3.8s ease-in-out infinite;
+}
+
+/* 猫咪暖光:放在 emoji 容器内,绝对居中 */
+.cat-glow {
+  position: relative;
+  display: inline-flex;
+}
+.cat-glow::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 150%;
+  height: 150%;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(217, 126, 69, 0.28), transparent 68%);
+  transform: translate(-50%, -50%);
+  z-index: -1;
+  animation: glow-breathe 4.2s ease-in-out infinite;
+  pointer-events: none;
 }
 
 .typewriter-caret::after {
@@ -96,12 +210,13 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .anim-fade-up,
-  .anim-bubble,
-  .anim-reveal,
-  .anim-fade-up-delay-1,
-  .anim-fade-up-delay-2,
-  .anim-fade-up-delay-3 {
-    animation: none;
+  body::before {
+    background: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
   }
 }

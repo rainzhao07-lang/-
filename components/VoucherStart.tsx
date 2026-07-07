@@ -32,8 +32,8 @@ export default function VoucherStart({ initialCode = "" }: Props) {
 
       <section className="flex flex-1 flex-col justify-center gap-6">
         <div className="text-center">
-          <div className="text-5xl" aria-hidden>
-            🐈
+          <div className="cat-glow inline-flex" aria-hidden>
+            <span className="anim-float text-5xl">🐈</span>
           </div>
           <h1 className="mt-5 text-3xl font-bold leading-snug">
             已购买兑换码？
@@ -54,7 +54,7 @@ export default function VoucherStart({ initialCode = "" }: Props) {
             value={code}
             onChange={(event) => setCode(normalizeCode(event.target.value))}
             maxLength={MAX_CODE_LENGTH}
-            placeholder="可先粘贴，也可以测完再填"
+            placeholder="可先粘贴，或测完再填"
             inputMode="text"
             autoCapitalize="characters"
             autoComplete="one-time-code"
