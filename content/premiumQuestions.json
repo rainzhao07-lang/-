@@ -1,0 +1,256 @@
+[
+  {
+    "id": "qP1",
+    "text": "如果只看每月可以自由安排的钱，你更接近哪种状态？",
+    "helper": "不用透露收入本身，只是帮报告判断养猫预算压力；也可以选择不想透露。",
+    "category": "income",
+    "options": [
+      {
+        "text": "我不太想透露，报告请用保守方式判断",
+        "value": "private",
+        "flags": { "income_band": "private", "financial_openness": "reserved" }
+      },
+      {
+        "text": "3000 元以内，每一笔支出都需要认真安排",
+        "value": "under_3000",
+        "flags": { "income_band": "under_3000", "spending_margin": "tight" }
+      },
+      {
+        "text": "3000-6000 元，可以安排，但需要有计划",
+        "value": "3000_6000",
+        "flags": { "income_band": "3000_6000", "spending_margin": "planned" }
+      },
+      {
+        "text": "6000-10000 元，愿意为稳定生活投入",
+        "value": "6000_10000",
+        "flags": { "income_band": "6000_10000", "spending_margin": "comfortable" }
+      },
+      {
+        "text": "10000 元以上，预算不是最大压力",
+        "value": "over_10000",
+        "flags": { "income_band": "over_10000", "spending_margin": "loose" }
+      }
+    ]
+  },
+  {
+    "id": "qP2",
+    "text": "如果真的开始养猫，你比较能接受的月均养猫预算是？",
+    "helper": "包含猫粮、猫砂、驱虫、玩具、零食和日常护理，不含大额突发医疗。",
+    "category": "budget",
+    "options": [
+      {
+        "text": "300 元以内，希望尽量轻量",
+        "value": "under_300",
+        "flags": { "monthly_cat_budget": "under_300", "budget_safety": "low" }
+      },
+      {
+        "text": "300-600 元，可以接受基础稳定配置",
+        "value": "300_600",
+        "flags": { "monthly_cat_budget": "300_600", "budget_safety": "medium" }
+      },
+      {
+        "text": "600-1000 元，希望吃用都更稳一点",
+        "value": "600_1000",
+        "flags": { "monthly_cat_budget": "600_1000", "budget_safety": "good" }
+      },
+      {
+        "text": "1000 元以上，愿意为省心和品质买单",
+        "value": "over_1000",
+        "flags": { "monthly_cat_budget": "over_1000", "budget_safety": "high" }
+      }
+    ]
+  },
+  {
+    "id": "qP3",
+    "text": "如果突然出现 2000-5000 元的医疗开销，你现在的承受感更像哪一种？",
+    "helper": "这不是考验爱猫程度，而是为了让报告把风险说得更真实。",
+    "category": "risk",
+    "options": [
+      {
+        "text": "会明显吃力，需要慎重考虑",
+        "value": "weak",
+        "flags": { "premium_medical_buffer": "weak", "risk_tolerance": "low" }
+      },
+      {
+        "text": "能处理，但会影响当月安排",
+        "value": "medium",
+        "flags": { "premium_medical_buffer": "medium", "risk_tolerance": "medium" }
+      },
+      {
+        "text": "基本可以承受，有预留空间",
+        "value": "strong",
+        "flags": { "premium_medical_buffer": "strong", "risk_tolerance": "high" }
+      },
+      {
+        "text": "我会提前准备专门的医疗备用金",
+        "value": "reserved",
+        "flags": { "premium_medical_buffer": "reserved", "risk_tolerance": "planned" }
+      }
+    ]
+  },
+  {
+    "id": "qP4",
+    "text": "你最想从猫身上获得的，其实更接近什么？",
+    "helper": "这题会影响报告里对你情绪需求的判断。",
+    "category": "emotion",
+    "options": [
+      {
+        "text": "稳定陪伴，家里有一个会等我的生命",
+        "value": "companionship",
+        "flags": { "emotional_need": "companionship", "bond_style": "stable" }
+      },
+      {
+        "text": "被安慰，低谷时有柔软的出口",
+        "value": "comfort",
+        "flags": { "emotional_need": "comfort", "bond_style": "healing" }
+      },
+      {
+        "text": "生活秩序，让自己更规律地照顾一件事",
+        "value": "routine",
+        "flags": { "emotional_need": "routine", "bond_style": "structured" }
+      },
+      {
+        "text": "互动和快乐，希望家里多一点活泼感",
+        "value": "playfulness",
+        "flags": { "emotional_need": "playfulness", "bond_style": "interactive" }
+      },
+      {
+        "text": "我还说不清，只是很想靠近猫",
+        "value": "uncertain",
+        "flags": { "emotional_need": "uncertain", "bond_style": "exploring" }
+      }
+    ]
+  },
+  {
+    "id": "qP5",
+    "text": "想到真正养猫，你最担心的现实问题是？",
+    "helper": "报告会把这个担心拆成可执行的准备清单。",
+    "category": "risk",
+    "options": [
+      {
+        "text": "长期花费，不想被隐形成本拖住",
+        "value": "cost",
+        "flags": { "main_worry": "cost", "prep_focus": "budget_plan" }
+      },
+      {
+        "text": "清洁压力，掉毛、猫砂和气味",
+        "value": "cleaning",
+        "flags": { "main_worry": "cleaning", "prep_focus": "home_cleaning" }
+      },
+      {
+        "text": "生病和医疗，怕自己处理不好",
+        "value": "medical",
+        "flags": { "main_worry": "medical", "prep_focus": "medical_plan" }
+      },
+      {
+        "text": "时间精力，怕忙起来照顾不到",
+        "value": "time",
+        "flags": { "main_worry": "time", "prep_focus": "routine_plan" }
+      },
+      {
+        "text": "家人、室友或房东是否同意",
+        "value": "consent",
+        "flags": { "main_worry": "consent", "prep_focus": "permission_plan" }
+      },
+      {
+        "text": "怕性格不合，彼此都不舒服",
+        "value": "mismatch",
+        "flags": { "main_worry": "mismatch", "prep_focus": "matching_plan" }
+      }
+    ]
+  },
+  {
+    "id": "qP6",
+    "text": "你希望这份深度报告用什么方式对你说话？",
+    "helper": "报告会根据这个选择调整语气，但不会回避现实风险。",
+    "category": "preference",
+    "options": [
+      {
+        "text": "温柔一点，像认真懂我的朋友",
+        "value": "gentle",
+        "flags": { "report_style": "gentle", "advice_tone": "soft" }
+      },
+      {
+        "text": "直接一点，别绕弯，把关键问题说透",
+        "value": "direct",
+        "flags": { "report_style": "direct", "advice_tone": "clear" }
+      },
+      {
+        "text": "实用一点，多给准备清单和判断标准",
+        "value": "practical",
+        "flags": { "report_style": "practical", "advice_tone": "actionable" }
+      },
+      {
+        "text": "有情绪浓度一点，希望读起来更有共鸣",
+        "value": "emotional",
+        "flags": { "report_style": "emotional", "advice_tone": "resonant" }
+      }
+    ]
+  },
+  {
+    "id": "qP7",
+    "text": "你现在的居住状态更接近哪一种？",
+    "helper": "居住状态会影响空间、许可和日常照顾建议。",
+    "category": "housing",
+    "options": [
+      {
+        "text": "租房独住，规则相对自己决定",
+        "value": "rental",
+        "flags": { "premium_housing": "rental", "home_control": "medium" }
+      },
+      {
+        "text": "合租，需要顾及室友和公共区域",
+        "value": "shared",
+        "flags": { "premium_housing": "shared", "home_control": "shared" }
+      },
+      {
+        "text": "独居且比较稳定，能长期规划",
+        "value": "alone",
+        "flags": { "premium_housing": "alone", "home_control": "high" }
+      },
+      {
+        "text": "和家人或伴侣同住，需要共同确认",
+        "value": "family_partner",
+        "flags": { "premium_housing": "family_partner", "home_control": "negotiated" }
+      },
+      {
+        "text": "自有住房，空间和规则比较稳定",
+        "value": "owned",
+        "flags": { "premium_housing": "owned", "home_control": "high" }
+      }
+    ]
+  },
+  {
+    "id": "qP8",
+    "text": "这份报告最后最应该帮你判断什么？",
+    "helper": "这会决定报告结尾最用力的地方。",
+    "category": "preference",
+    "options": [
+      {
+        "text": "现在到底适不适合开始养",
+        "value": "whether_now",
+        "flags": { "decision_goal": "whether_now", "final_focus": "readiness" }
+      },
+      {
+        "text": "哪类猫最适合我",
+        "value": "which_cat",
+        "flags": { "decision_goal": "which_cat", "final_focus": "breed_match" }
+      },
+      {
+        "text": "哪些坑我应该避开",
+        "value": "avoid_list",
+        "flags": { "decision_goal": "avoid_list", "final_focus": "risk_avoidance" }
+      },
+      {
+        "text": "我需要先准备什么",
+        "value": "prep_list",
+        "flags": { "decision_goal": "prep_list", "final_focus": "preparation" }
+      },
+      {
+        "text": "我为什么这么想养猫",
+        "value": "self_understanding",
+        "flags": { "decision_goal": "self_understanding", "final_focus": "self_insight" }
+      }
+    ]
+  }
+]

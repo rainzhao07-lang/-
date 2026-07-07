@@ -1,6 +1,7 @@
 // 报告生成 Prompt 模板。
 // 运营者可直接改这里的措辞调优报告文风,不需要碰任何组件代码。
-import type { BreedConflict, BreedProfile, HardFlags, Persona } from "@/lib/types";
+import { describePremiumFlags } from "@/lib/premium";
+import type { BreedConflict, BreedProfile, HardFlags, Persona, PremiumFlags } from "@/lib/types";
 
 /** 硬条件标记 → 给 LLM 看的人话描述 */
 export const HARD_FLAG_LABELS: Record<string, Record<string, string>> = {
@@ -94,6 +95,7 @@ export function buildReportMessages(
   hardFlags: HardFlags,
   breedFacts?: BreedProfile,
   conflict?: BreedConflict,
+  premiumFlags?: PremiumFlags,
 ): ReportMessages {
   const costLine = breedFacts
     ? `${breedFacts.name}参考月花费:主粮${formatRange(breedFacts.costDetail.food)}元,猫砂${formatRange(breedFacts.costDetail.litter)}元,其他护理/玩具/零食${formatRange(breedFacts.costDetail.other)}元。`
@@ -105,27 +107,45 @@ export function buildReportMessages(
     conflict?.hasConflict
       ? `现实适配提示:用户的${conflict.typeLabels.join("、")}与${conflict.primaryBreed}存在冲突。报告必须写一段建设性的\"缓一缓\"建议,方向是:以现在的条件养${conflict.primaryBreed}会有点吃力,但不是否定用户;如果先把相关条件安排好,或从${conflict.softAlternative ?? "更低维护的猫"}开始,会顺利得多。`
       : "现实适配提示:未发现明显冲突,但仍需提醒用户每只猫都是独立个体。";
+  const premiumLines = describePremiumFlags(premiumFlags);
+  const hasPremium = premiumLines.length > 0;
+  const styleRule = reportStyleRule(premiumFlags?.report_style);
+  const structureLines = hasPremium
+    ? [
+        "【结构要求】用 Markdown 小标题(## 开头)分为六节,顺序固定:",
+        "1. 「你的猫系人格」——对用户人格的深度剖析,其中必须有一段直击内心、让用户感觉\"被看见\"的句子;",
+        `2. 「为什么是${persona.primaryBreed.name}」——结合用户的具体答案,把这只猫拟人化地写活;`,
+        "3. 「现实适配度」——必须分开写预算、空间、作息、医疗承受力,并给出清晰判断;",
+        "4. 「情绪需求」——解释用户真正想从猫身上获得什么,不要只写陪伴两个字;",
+        "5. 「三个养猫风险和解决方案」——每个风险都要给可执行方案,不要制造焦虑;",
+        "6. 「备选与行动清单」——写两只备选猫、新手第一个月准备清单、3个 AI 猫名彩蛋。",
+      ]
+    : [
+        "【结构要求】用 Markdown 小标题(## 开头)分为五节,顺序固定:",
+        "1. 「你的猫系人格」——对用户人格的深度剖析,其中必须有一段直击内心、让用户感觉\"被看见\"的句子;",
+        `2. 「为什么是${persona.primaryBreed.name}」——结合用户的具体答案,把这只猫拟人化地写活;`,
+        `3. 「两只备选」——${persona.altBreeds.map((b) => b.name).join("与")},与主推品种做诚实的横向对比;`,
+        `4. 「真实养育须知」——${persona.primaryBreed.name}的性格真相、健康注意点、月均花费分项、新手第一个月清单;`,
+        "5. 「彩蛋」——为这只未来的猫起3个有寓意的名字,每个附一句解释。",
+      ];
 
   const system = [
     "你是「本命猫鉴定所」的首席猫格鉴定师:温暖、专业、有文采,用中文写作。",
     "你的任务是基于用户的测试结果,写一份900-1200字的《养猫决策报告》。",
     "",
-    "【结构要求】用 Markdown 小标题(## 开头)分为五节,顺序固定:",
-    `1. 「你的猫系人格」——对用户人格的深度剖析,其中必须有一段直击内心、让用户感觉"被看见"的句子;`,
-    `2. 「为什么是${persona.primaryBreed.name}」——结合用户的具体答案,把这只猫拟人化地写活;`,
-    `3. 「两只备选」——${persona.altBreeds.map((b) => b.name).join("与")},与主推品种做诚实的横向对比;`,
-    `4. 「真实养育须知」——${persona.primaryBreed.name}的性格真相、健康注意点、月均花费分项、新手第一个月清单;`,
-    "5. 「彩蛋」——为这只未来的猫起3个有寓意的名字,每个附一句解释。",
+    ...structureLines,
     "",
     "【语气规则】",
+    `- ${styleRule}`,
     "- 缺点要写成\"代价与美感\",永远不贬损用户;",
+    "- 付费定制信息必须显著影响报告,尤其是预算、医疗、居住状态、情绪需求、担心点和最终判断目标;",
     "- 所有品种描述必须优先依据下方【品种事实库】,不要编造未给出的遗传病或绝对结论;",
     "- 花费必须写成分项参考区间,禁止只写\"数百元区间\"、\"丰俭由人\"、\"因人而异\"这类空话;",
     "- 用户的硬性条件(作息/空间/预算/掉毛底线等)不改变人格结论,但必须诚实地影响建议:",
     "  条件与品种存在冲突时(例如不能接受掉毛但主推品种掉毛明显),要直说现实并给出可操作的应对方案。",
     "- 冲突表达只做建设性的\"缓一缓\"建议,不要写\"你不适合养猫\"、\"暂不建议养猫\"这类否决式结论。",
     "",
-    "【禁词(硬规则)】全文严禁出现:占卜、命理、运势、注定。表达缘分感请用「契合」「匹配」。",
+    "【禁词(硬规则)】全文严禁出现:占卜、命理、运势、算命、注定、天命、玄学。表达缘分感请用「契合」「匹配」。",
     "",
     "【固定结尾】报告最后必须依次包含以下两层意思(可润色但不可省略):",
     "1. 倡导领养代替购买,并说明这些性格特质在田园猫中同样存在;",
@@ -155,6 +175,13 @@ export function buildReportMessages(
     "",
     "【用户的硬性条件】",
     ...describeHardFlags(hardFlags).map((line) => `- ${line}`),
+    ...(premiumLines.length > 0
+      ? [
+          "",
+          "【付费定制信息】",
+          ...premiumLines.map((line) => `- ${line}`),
+        ]
+      : []),
   ].join("\n");
 
   return { system, user };
@@ -162,4 +189,17 @@ export function buildReportMessages(
 
 function formatRange(range: [number, number]): string {
   return `${range[0]}-${range[1]}`;
+}
+
+function reportStyleRule(style?: string): string {
+  if (style === "direct") {
+    return "用户选择了直接风格:少铺垫,把关键判断、风险和下一步说清楚。";
+  }
+  if (style === "practical") {
+    return "用户选择了实用风格:多用清单、判断标准和可执行步骤,少写空泛抒情。";
+  }
+  if (style === "emotional") {
+    return "用户选择了情绪共鸣风格:可以更有画面感,但现实风险仍要具体。";
+  }
+  return "用户选择了温柔风格或未指定风格:表达要柔和,但不能回避现实判断。";
 }

@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 type Props = {
   sessionId: string;
   paid: boolean;
+  hasPremiumCustomization: boolean;
   payUrl: string;
   teaser: string;
   breedName: string;
@@ -26,7 +27,14 @@ function normalizeCode(value: string) {
   return value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, MAX_CODE_LENGTH);
 }
 
-export default function RedeemBox({ sessionId, paid, payUrl, teaser, breedName }: Props) {
+export default function RedeemBox({
+  sessionId,
+  paid,
+  hasPremiumCustomization,
+  payUrl,
+  teaser,
+  breedName,
+}: Props) {
   const router = useRouter();
   const [showInput, setShowInput] = useState(false);
   const [code, setCode] = useState("");
@@ -43,12 +51,14 @@ export default function RedeemBox({ sessionId, paid, payUrl, teaser, breedName }
   if (paid) {
     return (
       <section className="anim-fade-up-delay-3 rounded-card bg-ink p-6 text-center text-cream">
-        <p className="text-sm">你的深度报告已解锁</p>
+        <p className="text-sm">
+          {hasPremiumCustomization ? "你的深度报告已解锁" : "还差一步定制问题"}
+        </p>
         <button
-          onClick={() => router.push(`/report/${sessionId}`)}
+          onClick={() => router.push(hasPremiumCustomization ? `/report/${sessionId}` : `/premium-quiz/${sessionId}`)}
           className="mt-4 w-full rounded-full bg-accent py-3 font-bold text-white active:scale-95"
         >
-          查看我的养猫决策报告
+          {hasPremiumCustomization ? "查看我的养猫决策报告" : "完成定制问题"}
         </button>
       </section>
     );
@@ -69,7 +79,7 @@ export default function RedeemBox({ sessionId, paid, payUrl, teaser, breedName }
 
       if (res.ok && data.ok) {
         window.localStorage.removeItem(PENDING_CODE_KEY);
-        router.push(`/report/${sessionId}`);
+        router.push(hasPremiumCustomization ? `/report/${sessionId}` : `/premium-quiz/${sessionId}`);
         return;
       }
 

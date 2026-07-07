@@ -51,6 +51,31 @@ export type Question = {
 
 export type HardFlags = Record<string, string>;
 
+export type PremiumQuestionCategory =
+  | "income"
+  | "budget"
+  | "housing"
+  | "emotion"
+  | "lifestyle"
+  | "risk"
+  | "preference";
+
+export type PremiumQuestionOption = {
+  text: string;
+  value: string;
+  flags: Record<string, string>;
+};
+
+export type PremiumQuestion = {
+  id: string;
+  text: string;
+  helper?: string;
+  category: PremiumQuestionCategory;
+  options: PremiumQuestionOption[];
+};
+
+export type PremiumFlags = Record<string, string>;
+
 export type BreedConflictType =
   | "shedding"
   | "budget"

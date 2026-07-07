@@ -4,6 +4,7 @@ import RedeemBox from "@/components/RedeemBox";
 import { personaById } from "@/lib/content";
 import { db } from "@/lib/db";
 import { paymentProvider } from "@/lib/payment/code-redemption";
+import { hasPremiumFlags } from "@/lib/premium";
 import { detectBreedConflict } from "@/lib/scoring";
 
 export const dynamic = "force-dynamic";
@@ -74,6 +75,7 @@ export default async function ResultPage({
       <RedeemBox
         sessionId={sessionId}
         paid={session.paid}
+        hasPremiumCustomization={hasPremiumFlags(session.premiumFlags)}
         payUrl={payEntry.url ?? ""}
         teaser={persona.freeTeaser}
         breedName={persona.primaryBreed.name}

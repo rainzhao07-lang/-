@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import { buildReportMessages } from "@/content/prompts";
-import type { BreedConflict, BreedProfile, HardFlags, Persona } from "./types";
+import type { BreedConflict, BreedProfile, HardFlags, Persona, PremiumFlags } from "./types";
 
 const MAX_TOKENS = 1800;
 const FIRST_TOKEN_TIMEOUT_MS = 30_000;
@@ -10,6 +10,7 @@ export type ReportInput = {
   persona: Persona;
   answersSummary: string[];
   hardFlags: HardFlags;
+  premiumFlags?: PremiumFlags;
   breedFacts?: BreedProfile;
   conflict?: BreedConflict;
 };
@@ -51,6 +52,7 @@ async function* attemptStream(input: ReportInput): AsyncGenerator<string> {
     input.hardFlags,
     input.breedFacts,
     input.conflict,
+    input.premiumFlags,
   );
 
   const controller = new AbortController();

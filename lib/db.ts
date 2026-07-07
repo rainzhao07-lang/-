@@ -9,13 +9,16 @@
 // 2. 基础设施错误(查询失败)绝不能吞成"缓存未命中",否则缓存层抖动会直接
 //    变成重复 LLM 计费——查询失败一律抛错,由路由层返回 503。
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { HardFlags } from "./types";
+import type { HardFlags, PremiumFlags } from "./types";
 
 export type SessionRecord = {
   id: string;
   answers: number[];
   personaId: string;
   hardFlags: HardFlags;
+  premiumAnswers: number[] | null;
+  premiumFlags: PremiumFlags | null;
+  userTier: "free" | "paid";
   paid: boolean;
   createdAt: string;
 };
@@ -40,6 +43,8 @@ const PENDING_MODEL = "__generating__";
 export interface Db {
   createSession(data: { answers: number[]; personaId: string; hardFlags: HardFlags }): Promise<SessionRecord>;
   getSession(id: string): Promise<SessionRecord | null>;
+  /** 保存付费定制题答案。允许先保存再核销兑换码,便于兑换码入口无缝进入报告。 */
+  savePremiumAnswers(sessionId: string, answers: number[], premiumFlags: PremiumFlags): Promise<SessionRecord | null>;
   /** 原子核销:码存在且未用 → 标记已用 + session.paid=true,单事务完成。成功返回 true。 */
   redeemCode(code: string, sessionId: string): Promise<boolean>;
   insertCodes(codes: string[]): Promise<void>;
@@ -79,6 +84,23 @@ function supabaseDb(url: string, serviceRoleKey: string): Db {
       if (error) {
         if (error.code === "22P02") return null;
         throw new Error(`getSession failed: ${error.message}`);
+      }
+      return data ? rowToSession(data) : null;
+    },
+
+    async savePremiumAnswers(sessionId, answers, premiumFlags) {
+      const { data, error } = await client
+        .from("sessions")
+        .update({
+          premium_answers: answers,
+          premium_flags: premiumFlags,
+        })
+        .eq("id", sessionId)
+        .select()
+        .maybeSingle();
+      if (error) {
+        if (error.code === "22P02") return null;
+        throw new Error(`savePremiumAnswers failed: ${error.message}`);
       }
       return data ? rowToSession(data) : null;
     },
@@ -165,12 +187,16 @@ function supabaseDb(url: string, serviceRoleKey: string): Db {
 }
 
 function rowToSession(row: Record<string, unknown>): SessionRecord {
+  const paid = Boolean(row.paid);
   return {
     id: row.id as string,
     answers: row.answers as number[],
     personaId: row.persona_id as string,
     hardFlags: (row.hard_flags ?? {}) as HardFlags,
-    paid: Boolean(row.paid),
+    premiumAnswers: (row.premium_answers as number[] | null | undefined) ?? null,
+    premiumFlags: (row.premium_flags as PremiumFlags | null | undefined) ?? null,
+    userTier: row.user_tier === "paid" || paid ? "paid" : "free",
+    paid,
     createdAt: row.created_at as string,
   };
 }
@@ -202,6 +228,9 @@ function memoryDb(): Db {
         answers,
         personaId,
         hardFlags,
+        premiumAnswers: null,
+        premiumFlags: null,
+        userTier: "free",
         paid: false,
         createdAt: new Date().toISOString(),
       };
@@ -213,6 +242,14 @@ function memoryDb(): Db {
       return store.sessions.get(id) ?? null;
     },
 
+    async savePremiumAnswers(sessionId, answers, premiumFlags) {
+      const session = store.sessions.get(sessionId);
+      if (!session) return null;
+      session.premiumAnswers = answers;
+      session.premiumFlags = premiumFlags;
+      return session;
+    },
+
     async redeemCode(code, sessionId) {
       const entry = store.codes.get(code);
       const session = store.sessions.get(sessionId);
@@ -220,6 +257,7 @@ function memoryDb(): Db {
       entry.used = true;
       entry.usedBySession = sessionId;
       session.paid = true;
+      session.userTier = "paid";
       return true;
     },
 

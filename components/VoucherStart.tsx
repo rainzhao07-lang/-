@@ -36,12 +36,12 @@ export default function VoucherStart({ initialCode = "" }: Props) {
             <span className="anim-float text-5xl">🐈</span>
           </div>
           <h1 className="mt-5 text-3xl font-bold leading-snug">
-            已购买兑换码？
+            你的本命猫报告
             <br />
-            先完成测试再解锁报告
+            已预约
           </h1>
           <p className="mt-4 text-sm leading-relaxed text-soft">
-            兑换码会先保存在本机。完成 16 道题后，结果页会自动带入兑换码，直接解锁深度报告。
+            完成测试后，系统会根据你的答案生成专属养猫决策报告。兑换码会先保存在本机，基础测试和定制问题完成后自动解锁报告。
           </p>
         </div>
 
@@ -64,7 +64,7 @@ export default function VoucherStart({ initialCode = "" }: Props) {
             onClick={startQuiz}
             className="mt-4 w-full rounded-full bg-accent py-3.5 font-bold text-white active:scale-95"
           >
-            开始测试
+            开始生成我的报告
           </button>
         </div>
 
@@ -72,7 +72,7 @@ export default function VoucherStart({ initialCode = "" }: Props) {
           <p className="font-bold text-accentDeep">使用说明</p>
           <p className="mt-2">1. 在商城下单后，复制订单里的兑换码。</p>
           <p>2. 回到这里粘贴兑换码并开始测试。</p>
-          <p>3. 测完后点击“解锁报告”，即可生成专属报告。</p>
+          <p>3. 完成基础测试和定制问题后，系统会自动核销并生成专属报告。</p>
         </div>
       </section>
     </main>

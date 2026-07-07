@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { breedByName, personaById, questions } from "@/lib/content";
 import { db } from "@/lib/db";
 import { generateReportStream, llmModelName } from "@/lib/llm";
+import { hasPremiumFlags } from "@/lib/premium";
 import { detectBreedConflict } from "@/lib/scoring";
 
 export const runtime = "nodejs";
@@ -35,6 +36,10 @@ export async function POST(req: Request) {
     }
     if (!session.paid) {
       return NextResponse.json({ error: "请先解锁报告" }, { status: 403 });
+    }
+    const premiumFlags = session.premiumFlags;
+    if (!hasPremiumFlags(premiumFlags)) {
+      return NextResponse.json({ error: "请先完成付费定制问题" }, { status: 400 });
     }
 
     claim = await db.claimReportGeneration(sessionId);
@@ -77,6 +82,7 @@ export async function POST(req: Request) {
             persona,
             answersSummary,
             hardFlags: session.hardFlags,
+            premiumFlags,
             breedFacts,
             conflict,
           })) {

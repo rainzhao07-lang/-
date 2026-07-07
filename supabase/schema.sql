@@ -9,6 +9,9 @@ create table sessions (
   answers jsonb not null,            -- 12题答案数组(选项下标)
   persona_id text not null,          -- 计分结果
   hard_flags jsonb not null,         -- 硬条件标记(预算/空间等)
+  premium_answers jsonb,             -- 付费定制题答案数组(选项下标)
+  premium_flags jsonb,               -- 付费定制题汇总标签
+  user_tier text not null default 'free' check (user_tier in ('free', 'paid')),
   paid boolean not null default false,
   created_at timestamptz default now()
 );
@@ -30,6 +33,11 @@ create table reports (
   model text,
   created_at timestamptz default now()
 );
+
+-- 已部署过旧版 schema 的项目,可重复执行以下补列语句。
+alter table sessions add column if not exists premium_answers jsonb;
+alter table sessions add column if not exists premium_flags jsonb;
+alter table sessions add column if not exists user_tier text not null default 'free';
 
 -- 显式开启 RLS,不创建任何 policy = 非 service_role 一律拒绝
 alter table sessions enable row level security;
@@ -59,7 +67,7 @@ begin
     return false;
   end if;
 
-  update sessions set paid = true where id = p_session;
+  update sessions set paid = true, user_tier = 'paid' where id = p_session;
   return true;
 end;
 $$;

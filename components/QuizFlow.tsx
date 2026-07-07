@@ -8,6 +8,7 @@ import { topPersonaForPartial } from "@/lib/scoring";
 
 const MICRO_FEEDBACK_AFTER = new Set([3, 7, 11]); // 第4题、第8题、第12题后显示
 const BUBBLE_MS = 1100;
+const PENDING_CODE_KEY = "benmingmao.pendingCode";
 
 export default function QuizFlow() {
   const router = useRouter();
@@ -59,7 +60,8 @@ export default function QuizFlow() {
       });
       if (!res.ok) throw new Error(String(res.status));
       const data = (await res.json()) as { sessionId: string };
-      router.replace(`/result/${data.sessionId}`);
+      const pendingCode = window.localStorage.getItem(PENDING_CODE_KEY);
+      router.replace(pendingCode ? `/premium-quiz/${data.sessionId}` : `/result/${data.sessionId}`);
     } catch {
       setSubmitting(false);
       lockedRef.current = false;
