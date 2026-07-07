@@ -46,6 +46,21 @@ describe("本地规则报告生成器", () => {
     expect(report).toContain("领养代替购买");
   });
 
+  it("报告包含人格专属的'被看见'高潮段(情绪锚点)", () => {
+    const persona = personas.find((p) => p.id === "velvet_commander") ?? personas[0];
+    const report = reportFor();
+    // signatureParagraph 必须完整出现,且落在"你的猫系人格"节内(为什么是...之前)
+    expect(persona.signatureParagraph.length).toBeGreaterThan(40);
+    const personaSection = report.split("## 为什么是")[0];
+    expect(personaSection).toContain(persona.signatureParagraph);
+  });
+
+  it("每个人格都有非空 signatureParagraph", () => {
+    for (const persona of personas) {
+      expect(persona.signatureParagraph.length, `${persona.id} 缺少高潮段`).toBeGreaterThan(40);
+    }
+  });
+
   it("不同付费答案会生成不同重点", () => {
     const practical = reportFor(basePremiumAnswers);
     const emotionalAnswers = [...basePremiumAnswers];

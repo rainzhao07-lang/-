@@ -106,8 +106,9 @@ export function buildLocalReport(input: LocalReportInput): string {
   return [
     "## 你的猫系人格",
     `${style.lead} 你的测试结果是「${input.persona.title}」,关键词是「${input.persona.subtitle}」。${input.persona.verdict}`,
+    input.persona.signatureParagraph,
     `从基础题看,你身上的线索是:${hardSummary(hard)}。${clues ? `其中最有参考价值的几条答案是:${clues}。` : ""}`,
-    `${input.persona.freeTeaser} 这不是给你贴标签,而是说明你在亲密关系里既需要温度,也需要边界和节奏。`,
+    `这些不是给你贴标签,而是说明你在亲密关系里既需要温度,也需要边界和节奏——一只合适的猫,恰好懂得怎么和这样的你相处。`,
     "",
     `## 为什么是${breedName}`,
     `${breedName}成为你的本命猫,不是因为它只符合一个单点偏好,而是它和你的生活节奏、互动期待、承受边界更容易形成稳定匹配。${input.persona.primaryBreed.reason}`,

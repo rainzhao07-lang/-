@@ -29,6 +29,8 @@ export type Persona = {
   subtitle: string;
   verdict: string;
   freeTeaser: string;
+  /** 人工精修的"被看见"高潮段:报告情绪锚点,全报告截图率最高处 */
+  signatureParagraph: string;
   primaryBreed: Breed;
   altBreeds: Breed[];
   microFeedbackPool: string[];
