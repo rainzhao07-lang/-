@@ -7,7 +7,7 @@ import type { Persona } from "@/lib/types";
 
 export const runtime = "nodejs";
 
-// 分享卡规格(任务书§6):1080×1440 竖版 3:4
+// 分享卡规格:1080×1440 竖版 3:4
 const WIDTH = 1080;
 const HEIGHT = 1440;
 

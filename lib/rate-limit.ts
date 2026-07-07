@@ -1,6 +1,6 @@
 // 极简滑动窗口限流(内存版)。
 // 注意:Vercel Serverless 多实例间不共享内存,此限流为"单实例内"的最低防线,
-// MVP 阶段(兑换码只有8位随机大写字母数字,爆破空间巨大)足够;
+// MVP 阶段使用12位随机大写字母数字兑换码,这里做基础频率限制;
 // Phase 2 若需要更强防护,换 Upstash Redis 或 Supabase 计数即可,调用点不变。
 const buckets = new Map<string, number[]>();
 

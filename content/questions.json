@@ -3,9 +3,9 @@
     "id": "q1",
     "text": "周五晚上10点，你最可能在？",
     "options": [
-      { "text": "家里沙发上，和自己待着", "weights": { "snow_hermit": 3, "old_manor_poet": 1 }, "flags": {} },
-      { "text": "刚回家，白天已经排满", "weights": { "city_observer": 3 }, "flags": {} },
-      { "text": "和两三好友小聚", "weights": { "velvet_commander": 2, "dawn_expeditioner": 2 }, "flags": {} },
+      { "text": "家里沙发上，和自己待着", "weights": { "snow_hermit": 3, "old_manor_poet": 2 }, "flags": {} },
+      { "text": "刚回家，白天已经排满，只想安静下来", "weights": { "city_observer": 3, "harbor_keeper": 1 }, "flags": {} },
+      { "text": "和两三好友小聚，电量刚刚好", "weights": { "velvet_commander": 2, "dawn_expeditioner": 2 }, "flags": {} },
       { "text": "还在加班/学习，夜里才是我的时间", "weights": { "midnight_curator": 3 }, "flags": { "schedule": "busy" } }
     ]
   },
@@ -21,12 +21,12 @@
   },
   {
     "id": "q3",
-    "text": "难得的完整休息日，你的理想过法是？",
+    "text": "想象你下班回家，门口有只猫在等你，你第一反应是？",
     "options": [
-      { "text": "一本书或一部老电影，泡掉一下午", "weights": { "old_manor_poet": 3 }, "flags": {} },
-      { "text": "收拾房间，把生活捋顺", "weights": { "city_observer": 2, "velvet_commander": 1 }, "flags": {} },
-      { "text": "出门！爬山探店citywalk都行", "weights": { "dawn_expeditioner": 3 }, "flags": {} },
-      { "text": "什么都不干，瘫着回血", "weights": { "dusk_weaver": 2, "snow_hermit": 1 }, "flags": {} }
+      { "text": "先换衣服瘫一会儿，恢复人类形态再贴贴", "weights": { "snow_hermit": 1, "dusk_weaver": 3 }, "flags": { "care_time": "low" } },
+      { "text": "摸摸头打个招呼，然后各自安好", "weights": { "harbor_keeper": 2, "city_observer": 1 }, "flags": { "care_time": "mid" } },
+      { "text": "立刻逗它玩十分钟，今天的疲惫都散了", "weights": { "dawn_expeditioner": 2, "midnight_curator": 1 }, "flags": { "care_time": "high" } },
+      { "text": "边收拾边和它念叨今天发生了什么", "weights": { "velvet_commander": 2, "old_manor_poet": 1 }, "flags": { "care_time": "high" } }
     ]
   },
   {
@@ -43,33 +43,43 @@
     "id": "q5",
     "text": "说实话，你平时几点睡？",
     "options": [
-      { "text": "23点前，作息比闹钟还准", "weights": { "city_observer": 1 }, "flags": { "schedule": "regular" } },
+      { "text": "23点前，作息比闹钟还准", "weights": { "city_observer": 1, "harbor_keeper": 1 }, "flags": { "schedule": "regular" } },
       { "text": "0点到1点，普通程度的晚", "weights": {}, "flags": { "schedule": "normal" } },
-      { "text": "凌晨2点后是常态", "weights": { "midnight_curator": 2 }, "flags": { "schedule": "night" } },
+      { "text": "凌晨2点后是常态", "weights": { "midnight_curator": 3 }, "flags": { "schedule": "night" } },
       { "text": "轮班/出差，作息不由我", "weights": {}, "flags": { "schedule": "irregular" } }
     ]
   },
   {
     "id": "q6",
-    "text": "你现在（或准备养猫时）的居住空间是？",
+    "text": "你现在（或准备养猫时）的居住空间更像哪种？",
     "options": [
-      { "text": "合租房里的一间", "weights": {}, "flags": { "space": "small" } },
-      { "text": "独立小户型，一人天地", "weights": {}, "flags": { "space": "medium" } },
-      { "text": "两室以上，空间宽裕", "weights": {}, "flags": { "space": "large" } },
-      { "text": "带阳台/院子，猫的豪宅", "weights": {}, "flags": { "space": "large" } }
+      { "text": "合租房里的一间，东西已经很多了", "weights": {}, "flags": { "space": "small" } },
+      { "text": "独立小户型，一人天地，能慢慢布置", "weights": { "city_observer": 1 }, "flags": { "space": "medium" } },
+      { "text": "两室以上，猫跑酷应该有余地", "weights": { "velvet_commander": 1 }, "flags": { "space": "large" } },
+      { "text": "带阳台/院子，已经在脑补猫的豪宅", "weights": { "dawn_expeditioner": 1 }, "flags": { "space": "large" } }
     ]
   },
   {
     "id": "q7",
-    "text": "关于掉毛，你的真实底线是？",
+    "text": "关于「能不能养猫」这件事，你现在的处境是？",
     "options": [
-      { "text": "完全不能接受，我有洁癖", "weights": {}, "flags": { "shedding": "low" } },
-      { "text": "少量可以，定期打理没问题", "weights": {}, "flags": { "shedding": "mid" } },
-      { "text": "无所谓，粘毛器我有一打", "weights": {}, "flags": { "shedding": "high" } }
+      { "text": "我说了算，家里规则我能定", "weights": { "city_observer": 1 }, "flags": { "consent": "clear" } },
+      { "text": "已经和家人/室友聊过，基本没问题", "weights": { "velvet_commander": 1, "harbor_keeper": 1 }, "flags": { "consent": "discussed" } },
+      { "text": "还在争取，准备靠可爱和道理打动他们", "weights": { "dusk_weaver": 2, "old_manor_poet": 1 }, "flags": { "consent": "negotiating" } },
+      { "text": "可能有人强烈反对，我还没想好怎么开口", "weights": { "snow_hermit": 1 }, "flags": { "consent": "blocked" } }
     ]
   },
   {
     "id": "q8",
+    "text": "关于掉毛，你的真实底线是？",
+    "options": [
+      { "text": "我会很介意，低掉毛优先", "weights": { "city_observer": 1 }, "flags": { "shedding": "low" } },
+      { "text": "少量可以，定期打理没问题", "weights": { "harbor_keeper": 1, "old_manor_poet": 2 }, "flags": { "shedding": "mid" } },
+      { "text": "无所谓，粘毛器我有一打", "weights": { "dawn_expeditioner": 1, "velvet_commander": 1 }, "flags": { "shedding": "high" } }
+    ]
+  },
+  {
+    "id": "q9",
     "text": "你更想要哪种猫际关系？",
     "options": [
       { "text": "黏我，走哪跟哪的小尾巴", "weights": { "dusk_weaver": 2, "velvet_commander": 1 }, "flags": { "clinginess": "want_high" } },
@@ -79,42 +89,73 @@
     ]
   },
   {
-    "id": "q9",
-    "text": "每个月愿意为猫花多少（粮+砂+零食+杂项）？",
-    "options": [
-      { "text": "300以内，精打细算", "weights": {}, "flags": { "budget": "low" } },
-      { "text": "300-800，正常水平", "weights": {}, "flags": { "budget": "mid" } },
-      { "text": "800以上，它值得", "weights": {}, "flags": { "budget": "high" } }
-    ]
-  },
-  {
     "id": "q10",
-    "text": "宅家的周末，你大概率在？",
+    "text": "给自己买东西 vs 给毛孩子买东西，你更像哪种？",
     "options": [
-      { "text": "研究新菜/捣鼓手工", "weights": { "velvet_commander": 2, "old_manor_poet": 1 }, "flags": {} },
-      { "text": "游戏/追剧，根本停不下来", "weights": { "midnight_curator": 2, "dusk_weaver": 1 }, "flags": {} },
-      { "text": "健身、学习，高效运转", "weights": { "city_observer": 2, "dawn_expeditioner": 1 }, "flags": {} },
-      { "text": "窗边发会儿呆，看看外面", "weights": { "harbor_keeper": 3 }, "flags": {} }
+      { "text": "给自己省一点也行，但给它不能太差", "weights": { "velvet_commander": 2, "dusk_weaver": 1 }, "flags": { "budget": "high" } },
+      { "text": "我会做功课，性价比才是安全感", "weights": { "city_observer": 2, "harbor_keeper": 1 }, "flags": { "budget": "mid" } },
+      { "text": "先控制在300以内，长期能坚持更重要", "weights": { "snow_hermit": 1, "old_manor_poet": 2 }, "flags": { "budget": "low" } },
+      { "text": "愿意花，但也怕一时上头乱买", "weights": { "midnight_curator": 2, "dawn_expeditioner": 1 }, "flags": { "budget": "mid" } }
     ]
   },
   {
     "id": "q11",
-    "text": "你现在和谁一起住？",
+    "text": "如果它半夜突然不舒服，要去急诊，你的第一反应是？",
     "options": [
-      { "text": "一个人住", "weights": { "snow_hermit": 1 }, "flags": { "household": "alone" } },
-      { "text": "和伴侣", "weights": {}, "flags": { "household": "partner" } },
-      { "text": "和室友", "weights": {}, "flags": { "household": "roommates" } },
-      { "text": "和家人（家里可能有小孩/老人）", "weights": {}, "flags": { "household": "family" } }
+      { "text": "拔腿就冲，钱之后再说", "weights": { "velvet_commander": 2, "dawn_expeditioner": 1 }, "flags": { "medical_buffer": "high" } },
+      { "text": "心疼但能安排，先把问题解决", "weights": { "harbor_keeper": 2, "city_observer": 1 }, "flags": { "medical_buffer": "mid" } },
+      { "text": "会先查价格和方案，尽量别失控", "weights": { "old_manor_poet": 2, "snow_hermit": 1 }, "flags": { "medical_buffer": "tight" } },
+      { "text": "我现在可能真的扛不住这种突发开销", "weights": { "dusk_weaver": 3 }, "flags": { "medical_buffer": "low" } }
     ]
   },
   {
     "id": "q12",
+    "text": "你现在和谁一起住？",
+    "options": [
+      { "text": "一个人住", "weights": { "snow_hermit": 1 }, "flags": { "household": "alone" } },
+      { "text": "和伴侣", "weights": { "dusk_weaver": 1 }, "flags": { "household": "partner" } },
+      { "text": "和室友", "weights": { "city_observer": 1 }, "flags": { "household": "roommates" } },
+      { "text": "和家人（家里可能有小孩/老人）", "weights": { "velvet_commander": 1 }, "flags": { "household": "family" } }
+    ]
+  },
+  {
+    "id": "q13",
+    "text": "你和猫毛、粉尘、喷嚏的关系是？",
+    "options": [
+      { "text": "基本没感觉，我和毛茸茸和平共处", "weights": { "dawn_expeditioner": 1 }, "flags": { "allergy": "none" } },
+      { "text": "偶尔打喷嚏，但不太影响生活", "weights": { "harbor_keeper": 1 }, "flags": { "allergy": "mild" } },
+      { "text": "我有鼻炎/过敏体质，得谨慎一点", "weights": { "city_observer": 1 }, "flags": { "allergy": "sensitive" } },
+      { "text": "还没和猫长期待过，不确定自己反应", "weights": { "snow_hermit": 1, "old_manor_poet": 2 }, "flags": { "allergy": "unknown" } }
+    ]
+  },
+  {
+    "id": "q14",
+    "text": "猫会掉毛、夜里跑酷、抓家具、吐毛球……你最怕哪件事？",
+    "options": [
+      { "text": "都能接受，养它就接受它的全套生活", "weights": { "dawn_expeditioner": 2, "velvet_commander": 1 }, "flags": { "trouble": "all_ok" } },
+      { "text": "掉毛和清洁最头疼，我怕家里失控", "weights": { "city_observer": 1, "old_manor_poet": 2 }, "flags": { "trouble": "cleaning" } },
+      { "text": "半夜跑酷我真的会崩溃", "weights": { "harbor_keeper": 2, "snow_hermit": 1 }, "flags": { "trouble": "night_noise" } },
+      { "text": "最怕生病花钱和照顾，我会很焦虑", "weights": { "dusk_weaver": 3 }, "flags": { "trouble": "medical_worry" } }
+    ]
+  },
+  {
+    "id": "q15",
+    "text": "你和养猫这件事，现在到哪一步了？",
+    "options": [
+      { "text": "第一次认真考虑，正在疯狂做功课", "weights": { "city_observer": 1, "snow_hermit": 1 }, "flags": { "experience": "newbie" } },
+      { "text": "家里以前养过，我知道它不是玩具", "weights": { "old_manor_poet": 2, "harbor_keeper": 1 }, "flags": { "experience": "familiar" } },
+      { "text": "云吸猫很久，收藏夹已经塞满攻略", "weights": { "midnight_curator": 2, "dusk_weaver": 2 }, "flags": { "experience": "researched" } },
+      { "text": "养过/照顾过猫，知道甜也知道麻烦", "weights": { "velvet_commander": 1, "dawn_expeditioner": 1 }, "flags": { "experience": "experienced" } }
+    ]
+  },
+  {
+    "id": "q16",
     "text": "最后一题：选一个词，形容你想要的生活。",
     "options": [
       { "text": "「安静」", "weights": { "harbor_keeper": 2, "snow_hermit": 2 }, "flags": {} },
       { "text": "「热闹」", "weights": { "dawn_expeditioner": 2, "velvet_commander": 2 }, "flags": {} },
       { "text": "「自由」", "weights": { "midnight_curator": 2, "city_observer": 2 }, "flags": {} },
-      { "text": "「温柔」", "weights": { "dusk_weaver": 3, "old_manor_poet": 1 }, "flags": {} }
+      { "text": "「温柔」", "weights": { "dusk_weaver": 4, "old_manor_poet": 1 }, "flags": {} }
     ]
   }
 ]

@@ -1,6 +1,6 @@
-// 报告生成 Prompt 模板(任务书§4.3)。
+// 报告生成 Prompt 模板。
 // 运营者可直接改这里的措辞调优报告文风,不需要碰任何组件代码。
-import type { HardFlags, Persona } from "@/lib/types";
+import type { BreedConflict, BreedProfile, HardFlags, Persona } from "@/lib/types";
 
 /** 硬条件标记 → 给 LLM 看的人话描述 */
 export const HARD_FLAG_LABELS: Record<string, Record<string, string>> = {
@@ -38,6 +38,41 @@ export const HARD_FLAG_LABELS: Record<string, Record<string, string>> = {
     roommates: "与室友合租",
     family: "与家人同住,家中可能有小孩或老人",
   },
+  care_time: {
+    low: "下班后需要先恢复精力,稳定陪伴时间偏少",
+    mid: "能保持日常轻量互动,也需要各自空间",
+    high: "愿意下班后主动陪玩和互动",
+  },
+  consent: {
+    clear: "居住环境由自己决定,养猫许可明确",
+    discussed: "已和家人或室友沟通过,基本同意",
+    negotiating: "仍在争取家人或室友支持",
+    blocked: "可能存在家人、室友或居住规则反对",
+  },
+  medical_buffer: {
+    high: "突发医疗开销承受力较强",
+    mid: "可以安排基础和突发医疗支出",
+    tight: "面对突发医疗支出会谨慎权衡",
+    low: "当前较难承受突发医疗开销",
+  },
+  allergy: {
+    none: "对猫毛和粉尘基本无明显反应",
+    mild: "偶尔喷嚏,但不太影响生活",
+    sensitive: "有鼻炎或过敏体质,需要谨慎",
+    unknown: "尚未确认自己与猫长期相处后的过敏反应",
+  },
+  trouble: {
+    all_ok: "能接受掉毛、夜间活动、抓挠和吐毛球等真实麻烦",
+    cleaning: "最担心掉毛和清洁压力",
+    night_noise: "最担心猫夜里跑酷或吵闹",
+    medical_worry: "最担心生病花钱和照顾压力",
+  },
+  experience: {
+    newbie: "第一次认真考虑养猫,仍在做功课",
+    familiar: "家里曾经养过猫,知道养猫不是玩具",
+    researched: "长期云吸猫并主动收藏攻略",
+    experienced: "有养猫或照顾猫的实际经验",
+  },
 };
 
 export function describeHardFlags(flags: HardFlags): string[] {
@@ -57,7 +92,20 @@ export function buildReportMessages(
   persona: Persona,
   answersSummary: string[],
   hardFlags: HardFlags,
+  breedFacts?: BreedProfile,
+  conflict?: BreedConflict,
 ): ReportMessages {
+  const costLine = breedFacts
+    ? `${breedFacts.name}参考月花费:主粮${formatRange(breedFacts.costDetail.food)}元,猫砂${formatRange(breedFacts.costDetail.litter)}元,其他护理/玩具/零食${formatRange(breedFacts.costDetail.other)}元。`
+    : "品种事实库暂缺,请只给保守参考区间。";
+  const healthLine = breedFacts
+    ? `${breedFacts.name}健康与护理重点:${breedFacts.healthRisks.join(";")}。`
+    : "健康与护理重点需用保守常识表达,避免绝对化。";
+  const conflictLine =
+    conflict?.hasConflict
+      ? `现实适配提示:用户的${conflict.typeLabels.join("、")}与${conflict.primaryBreed}存在冲突。报告必须写一段建设性的\"缓一缓\"建议,方向是:以现在的条件养${conflict.primaryBreed}会有点吃力,但不是否定用户;如果先把相关条件安排好,或从${conflict.softAlternative ?? "更低维护的猫"}开始,会顺利得多。`
+      : "现实适配提示:未发现明显冲突,但仍需提醒用户每只猫都是独立个体。";
+
   const system = [
     "你是「本命猫鉴定所」的首席猫格鉴定师:温暖、专业、有文采,用中文写作。",
     "你的任务是基于用户的测试结果,写一份900-1200字的《养猫决策报告》。",
@@ -66,14 +114,16 @@ export function buildReportMessages(
     `1. 「你的猫系人格」——对用户人格的深度剖析,其中必须有一段直击内心、让用户感觉"被看见"的句子;`,
     `2. 「为什么是${persona.primaryBreed.name}」——结合用户的具体答案,把这只猫拟人化地写活;`,
     `3. 「两只备选」——${persona.altBreeds.map((b) => b.name).join("与")},与主推品种做诚实的横向对比;`,
-    `4. 「真实养育须知」——${persona.primaryBreed.name}的性格真相、健康注意点、月均花费区间、新手第一个月清单;`,
+    `4. 「真实养育须知」——${persona.primaryBreed.name}的性格真相、健康注意点、月均花费分项、新手第一个月清单;`,
     "5. 「彩蛋」——为这只未来的猫起3个有寓意的名字,每个附一句解释。",
     "",
     "【语气规则】",
     "- 缺点要写成\"代价与美感\",永远不贬损用户;",
-    "- 所有品种描述基于常识性事实;花费只给区间,不给绝对值;",
+    "- 所有品种描述必须优先依据下方【品种事实库】,不要编造未给出的遗传病或绝对结论;",
+    "- 花费必须写成分项参考区间,禁止只写\"数百元区间\"、\"丰俭由人\"、\"因人而异\"这类空话;",
     "- 用户的硬性条件(作息/空间/预算/掉毛底线等)不改变人格结论,但必须诚实地影响建议:",
     "  条件与品种存在冲突时(例如不能接受掉毛但主推品种掉毛明显),要直说现实并给出可操作的应对方案。",
+    "- 冲突表达只做建设性的\"缓一缓\"建议,不要写\"你不适合养猫\"、\"暂不建议养猫\"这类否决式结论。",
     "",
     "【禁词(硬规则)】全文严禁出现:占卜、命理、运势、注定。表达缘分感请用「契合」「匹配」。",
     "",
@@ -90,6 +140,16 @@ export function buildReportMessages(
     `【主推品种】${persona.primaryBreed.name} —— ${persona.primaryBreed.reason}`,
     `【备选品种】${persona.altBreeds.map((b) => `${b.name}(${b.reason})`).join(";")}`,
     "",
+    "【品种事实库】",
+    `- ${costLine}`,
+    `- ${healthLine}`,
+    breedFacts
+      ? `- 适配标签:掉毛${breedFacts.shedding},活动量${breedFacts.activity},粘人度${breedFacts.clinginess},打理成本${breedFacts.grooming},新手友好度${breedFacts.beginnerFit},小空间适配${breedFacts.smallSpaceFit},国内可获得性${breedFacts.availability}。`
+      : "- 适配标签暂缺。",
+    "",
+    "【现实适配提示】",
+    `- ${conflictLine}`,
+    "",
     "【用户的答题记录】",
     ...answersSummary.map((line) => `- ${line}`),
     "",
@@ -98,4 +158,8 @@ export function buildReportMessages(
   ].join("\n");
 
   return { system, user };
+}
+
+function formatRange(range: [number, number]): string {
+  return `${range[0]}-${range[1]}`;
 }

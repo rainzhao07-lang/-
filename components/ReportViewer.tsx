@@ -1,7 +1,5 @@
 "use client";
 
-// 报告流式渲染(任务书§6):打字机效果;已有缓存则直接展示(依然走同一接口)。
-// 实现:fetch 流入 targetRef 缓冲,定时器按固定步进追赶,兼顾"真流式"与"缓存秒回"两种节奏。
 import { useEffect, useRef, useState } from "react";
 
 type Phase = "loading" | "streaming" | "done" | "error";
@@ -9,22 +7,21 @@ type Phase = "loading" | "streaming" | "done" | "error";
 export default function ReportViewer({ sessionId }: { sessionId: string }) {
   const [displayed, setDisplayed] = useState("");
   const [phase, setPhase] = useState<Phase>("loading");
+  const [errorMessage, setErrorMessage] = useState("报告生成遇到了一点问题");
   const targetRef = useRef("");
   const streamDoneRef = useRef(false);
   const startedRef = useRef(false);
   const typeStartRef = useRef<number | null>(null);
 
   useEffect(() => {
-    // 打字机计时器:每次挂载都要启动(StrictMode 会挂载→卸载→再挂载,
-    // cleanup 只清计时器;拉流则只启动一次,写入跨挂载存活的 targetRef)。
-    // 进度按"经过时间"计算而非每跳固定步进:页面切后台时浏览器会节流计时器,
-    // 回到前台的第一跳就能追平应显示的位置,不会出现慢动作残影。
-    const CHARS_PER_SECOND = 250;
+    const charsPerSecond = 250;
     const timer = window.setInterval(() => {
       const target = targetRef.current;
       if (target.length === 0) return;
+
       typeStartRef.current ??= Date.now();
-      const want = Math.ceil(((Date.now() - typeStartRef.current) / 1000) * CHARS_PER_SECOND);
+      const want = Math.ceil(((Date.now() - typeStartRef.current) / 1000) * charsPerSecond);
+
       setDisplayed((prev) => {
         const nextLen = Math.min(target.length, Math.max(prev.length, want));
         if (nextLen >= target.length && streamDoneRef.current) {
@@ -34,8 +31,8 @@ export default function ReportViewer({ sessionId }: { sessionId: string }) {
       });
     }, 24);
 
-    // 409 = 服务端有别的请求正在生成(生成锁落库,跨实例有效):轮询等缓存就绪
-    const MAX_PENDING_RETRIES = 10;
+    const maxPendingRetries = 10;
+
     async function run(attempt = 0) {
       try {
         const res = await fetch("/api/report", {
@@ -43,30 +40,35 @@ export default function ReportViewer({ sessionId }: { sessionId: string }) {
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ sessionId }),
         });
-        if (res.status === 409 && attempt < MAX_PENDING_RETRIES) {
+
+        if (res.status === 409 && attempt < maxPendingRetries) {
           window.setTimeout(() => void run(attempt + 1), 3000);
           return;
         }
+
         if (!res.ok || !res.body) {
           const data = await res.json().catch(() => null);
-          throw new Error((data as { error?: string })?.error ?? "生成失败");
+          throw new Error((data as { error?: string })?.error ?? "报告生成失败");
         }
+
         setPhase("streaming");
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
+
         for (;;) {
           const { done, value } = await reader.read();
           if (done) break;
           targetRef.current += decoder.decode(value, { stream: true });
         }
+
         targetRef.current += decoder.decode();
         streamDoneRef.current = true;
-      } catch {
+      } catch (err) {
+        setErrorMessage(err instanceof Error ? err.message : "报告生成失败");
         setPhase("error");
       }
     }
-    // startedRef 只防同一组件实例内的重复触发(StrictMode 双 effect);
-    // 跨实例/跨标签页的重复计费由服务端生成锁兜底(409 + 上面的轮询)
+
     if (!startedRef.current) {
       startedRef.current = true;
       void run();
@@ -81,14 +83,16 @@ export default function ReportViewer({ sessionId }: { sessionId: string }) {
         <div className="text-4xl" aria-hidden>
           🙀
         </div>
-        <p className="text-sm text-soft">报告生成遇到了一点问题</p>
+        <p className="text-sm text-soft">{errorMessage}</p>
         <button
           onClick={() => window.location.reload()}
           className="rounded-full bg-accent px-8 py-3 font-bold text-white active:scale-95"
         >
           刷新重试
         </button>
-        <p className="text-xs text-soft/70">已生成的报告不会重复计费,放心刷新</p>
+        <p className="text-xs text-soft/70">
+          兑换码已经核销的情况下，刷新不会重复消耗兑换码。
+        </p>
       </section>
     );
   }
@@ -99,7 +103,7 @@ export default function ReportViewer({ sessionId }: { sessionId: string }) {
         <div className="anim-reveal text-4xl" aria-hidden>
           ✍️
         </div>
-        <p className="text-sm font-medium">鉴定师正在为你撰写报告…</p>
+        <p className="text-sm font-medium">正在为你生成专属报告...</p>
         <p className="text-xs text-soft">通常需要几秒钟</p>
       </section>
     );
@@ -114,39 +118,42 @@ export default function ReportViewer({ sessionId }: { sessionId: string }) {
   );
 }
 
-/** 极简 Markdown 渲染:只处理 ## 小标题 / 无序与有序列表 / 分隔线 / 段落,不引第三方库 */
 function renderReport(text: string) {
   const blocks = text.split(/\n{2,}/);
-  return blocks.map((block, i) => {
+
+  return blocks.map((block, index) => {
     const trimmed = block.trim();
     if (!trimmed) return null;
+
     if (/^#{1,3}\s/.test(trimmed)) {
       return (
-        <h2 key={i} className="mb-3 mt-6 text-lg font-bold text-accentDeep first:mt-0">
+        <h2 key={index} className="mb-3 mt-6 text-lg font-bold text-accentDeep first:mt-0">
           {trimmed.replace(/^#{1,3}\s*/, "")}
         </h2>
       );
     }
+
     if (trimmed === "---") {
-      return <hr key={i} className="my-5 border-ink/10" />;
+      return <hr key={index} className="my-5 border-ink/10" />;
     }
-    // 有序列表(LLM 的"3个名字"彩蛋常用 1. 2. 3.)
+
     if (/^\d+[.、]\s*/.test(trimmed)) {
-      const items = trimmed.split("\n").filter((l) => /^\d+[.、]/.test(l.trim()));
+      const items = trimmed.split("\n").filter((line) => /^\d+[.、]/.test(line.trim()));
       return (
-        <ol key={i} className="mb-4 list-decimal space-y-1.5 pl-5 text-sm leading-relaxed text-ink/85">
-          {items.map((item, j) => (
-            <li key={j}>{stripInlineMarkup(item.trim().replace(/^\d+[.、]\s*/, ""))}</li>
+        <ol key={index} className="mb-4 list-decimal space-y-1.5 pl-5 text-sm leading-relaxed text-ink/85">
+          {items.map((item, itemIndex) => (
+            <li key={itemIndex}>{stripInlineMarkup(item.trim().replace(/^\d+[.、]\s*/, ""))}</li>
           ))}
         </ol>
       );
     }
+
     if (/^[-*]\s/m.test(trimmed)) {
-      const items = trimmed.split("\n").filter((l) => /^[-*]/.test(l.trim()));
+      const items = trimmed.split("\n").filter((line) => /^[-*]/.test(line.trim()));
       return (
-        <ul key={i} className="mb-4 space-y-1.5 text-sm leading-relaxed text-ink/85">
-          {items.map((item, j) => (
-            <li key={j} className="flex gap-2">
+        <ul key={index} className="mb-4 space-y-1.5 text-sm leading-relaxed text-ink/85">
+          {items.map((item, itemIndex) => (
+            <li key={itemIndex} className="flex gap-2">
               <span aria-hidden className="text-accent">
                 ·
               </span>
@@ -156,14 +163,15 @@ function renderReport(text: string) {
         </ul>
       );
     }
+
     return (
-      <p key={i} className="mb-4 text-[15px] leading-[1.9] text-ink/85">
+      <p key={index} className="mb-4 text-[15px] leading-[1.9] text-ink/85">
         {stripInlineMarkup(trimmed)}
       </p>
     );
   });
 }
 
-function stripInlineMarkup(s: string): string {
-  return s.replace(/\*\*(.+?)\*\*/g, "$1").replace(/\*(.+?)\*/g, "$1");
+function stripInlineMarkup(value: string): string {
+  return value.replace(/\*\*(.+?)\*\*/g, "$1").replace(/\*(.+?)\*/g, "$1");
 }

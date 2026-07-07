@@ -15,7 +15,7 @@ create table sessions (
 
 -- 兑换码
 create table redeem_codes (
-  code text primary key,             -- 8位大写字母数字
+  code text primary key,             -- 默认生成12位大写字母数字
   used boolean not null default false,
   used_by_session uuid references sessions(id),
   used_at timestamptz,

@@ -1,6 +1,28 @@
 // 全局领域类型:内容数据(/content)与计分引擎共用
 export type Breed = { name: string; reason: string };
 
+export type BreedLevel = "low" | "mid" | "mid_high" | "high";
+export type BreedSimpleLevel = "low" | "mid" | "high";
+
+export type BreedProfile = {
+  name: string;
+  shedding: BreedSimpleLevel;
+  activity: BreedSimpleLevel;
+  clinginess: BreedSimpleLevel;
+  grooming: BreedLevel;
+  monthlyCost: BreedLevel;
+  vetRisk: BreedSimpleLevel;
+  healthRisks: string[];
+  beginnerFit: BreedSimpleLevel;
+  smallSpaceFit: BreedSimpleLevel;
+  availability: BreedSimpleLevel;
+  costDetail: {
+    food: [number, number];
+    litter: [number, number];
+    other: [number, number];
+  };
+};
+
 export type Persona = {
   id: string;
   title: string;
@@ -28,6 +50,28 @@ export type Question = {
 };
 
 export type HardFlags = Record<string, string>;
+
+export type BreedConflictType =
+  | "shedding"
+  | "budget"
+  | "space"
+  | "beginner"
+  | "availability"
+  | "time"
+  | "medical"
+  | "allergy"
+  | "consent"
+  | "noise";
+
+export type BreedConflict = {
+  hasConflict: boolean;
+  types: BreedConflictType[];
+  typeLabels: string[];
+  primaryBreed: string;
+  softAlternative?: string;
+  softAlternativeReason?: string;
+  message?: string;
+};
 
 export type ScoreResult = {
   personaId: string;

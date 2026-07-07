@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { personas, questions } from "./content";
+import { buildReportMessages } from "@/content/prompts";
+import { breeds, breedByName, personas, questions } from "./content";
 import {
   accumulateScores,
   collectFlags,
+  detectBreedConflict,
   pickTopPersona,
   scoreAnswers,
   validateAnswers,
@@ -12,8 +14,8 @@ const ALL_FIRST = questions.map(() => 0); // 每题都选第一个选项
 const ALL_SECOND = questions.map(() => 1);
 
 describe("数据文件完整性", () => {
-  it("共12题,每题至少3个选项", () => {
-    expect(questions).toHaveLength(12);
+  it("共16题,每题至少3个选项", () => {
+    expect(questions).toHaveLength(16);
     for (const q of questions) {
       expect(q.options.length).toBeGreaterThanOrEqual(3);
     }
@@ -39,6 +41,19 @@ describe("数据文件完整性", () => {
       expect(p.microFeedbackPool.length).toBeGreaterThanOrEqual(2);
       expect(p.cardTheme.bg).toMatch(/^#/);
       expect(p.cardTheme.accent).toMatch(/^#/);
+    }
+  });
+
+  it("breeds.json 覆盖所有主推与备选品种,且主推品种不能是低可获得性", () => {
+    expect(Object.keys(breeds).length).toBeGreaterThan(0);
+    for (const p of personas) {
+      const primary = breedByName(p.primaryBreed.name);
+      expect(primary, `${p.id} 主推品种缺少事实库:${p.primaryBreed.name}`).toBeDefined();
+      expect(primary?.availability, `${p.id} 主推品种国内可获得性过低`).not.toBe("low");
+
+      for (const alt of p.altBreeds) {
+        expect(breedByName(alt.name), `${p.id} 备选品种缺少事实库:${alt.name}`).toBeDefined();
+      }
     }
   });
 
@@ -71,7 +86,7 @@ describe("计分引擎", () => {
     expect(r1).toEqual(r2);
 
     const r3 = scoreAnswers(ALL_SECOND);
-    expect(r3.personaId).toBe("city_observer");
+    expect(r3.personaId).toBe("harbor_keeper");
   });
 
   it("平分时按 personas.json 顺序取先者", () => {
@@ -84,12 +99,18 @@ describe("计分引擎", () => {
   it("汇总硬条件标记;同名 key 后答的覆盖先答的", () => {
     const flags = collectFlags(ALL_FIRST);
     expect(flags).toEqual({
+      care_time: "low",
       schedule: "regular", // q1A 无 flag,q5A regular
       space: "small",
+      consent: "clear",
       shedding: "low",
       clinginess: "want_high",
-      budget: "low",
+      budget: "high",
+      medical_buffer: "high",
       household: "alone",
+      allergy: "none",
+      trouble: "all_ok",
+      experience: "newbie",
     });
 
     // q1 选 D(schedule: busy),q5 选 C(schedule: night) → 以 q5 为准
@@ -110,5 +131,41 @@ describe("计分引擎", () => {
     expect(validateAnswers(questions.map(() => 99))).toBe(false); // 下标越界
     expect(validateAnswers("not-an-array")).toBe(false);
     expect(() => scoreAnswers([0])).toThrow("INVALID_ANSWERS");
+  });
+
+  it("现实条件冲突会给出温柔备选,无冲突则不提示", () => {
+    const commander = personas.find((p) => p.id === "velvet_commander")!;
+    const conflict = detectBreedConflict(commander, {
+      budget: "low",
+      shedding: "low",
+      space: "small",
+    });
+    expect(conflict.hasConflict).toBe(true);
+    expect(conflict.types).toEqual(expect.arrayContaining(["budget", "shedding", "space"]));
+    expect(conflict.softAlternative).toBe("田园橘猫");
+    expect(conflict.message).toContain("现实里更稳的搭档");
+
+    const observer = personas.find((p) => p.id === "city_observer")!;
+    const ok = detectBreedConflict(observer, {
+      budget: "mid",
+      shedding: "mid",
+      space: "medium",
+    });
+    expect(ok.hasConflict).toBe(false);
+    expect(ok.message).toBeUndefined();
+  });
+});
+
+describe("报告 Prompt", () => {
+  it("注入品种事实库、具体花费和冲突提示", () => {
+    const commander = personas.find((p) => p.id === "velvet_commander")!;
+    const breedFacts = breedByName(commander.primaryBreed.name)!;
+    const conflict = detectBreedConflict(commander, { budget: "low", shedding: "low", space: "small" });
+    const messages = buildReportMessages(commander, ["预算题 → 300以内，精打细算"], { budget: "low" }, breedFacts, conflict);
+
+    expect(messages.user).toContain("主粮300-600元");
+    expect(messages.user).toContain("肥厚型心肌病");
+    expect(messages.user).toContain("现实适配提示");
+    expect(messages.system).toContain("禁止只写");
   });
 });

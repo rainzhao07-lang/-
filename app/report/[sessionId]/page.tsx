@@ -8,7 +8,6 @@ import { db } from "@/lib/db";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "养猫决策报告" };
 
-/** 报告页(任务书§6):paid 门禁,未付费重定向回 result */
 export default async function ReportPage({
   params,
 }: {
@@ -18,6 +17,7 @@ export default async function ReportPage({
   const session = await db.getSession(sessionId);
   if (!session) redirect("/");
   if (!session.paid) redirect(`/result/${sessionId}`);
+
   const persona = personaById(session.personaId);
   if (!persona) redirect("/");
 
@@ -33,7 +33,6 @@ export default async function ReportPage({
 
       <ReportViewer sessionId={sessionId} />
 
-      {/* 底部:复用分享卡 + 重测入口 + 固定文案 */}
       <section className="flex flex-col items-center gap-4 border-t border-ink/10 pt-8">
         <img
           src={`/api/card/${sessionId}`}
@@ -55,8 +54,8 @@ export default async function ReportPage({
       </section>
 
       <footer className="space-y-2 pb-4 text-center text-xs leading-relaxed text-soft/80">
-        <p>领养代替购买——这些性格特质，田园猫中同样存在。</p>
-        <p>本报告为参考建议，每只猫都是独立的个体。觉得不准？联系客服免费重测。</p>
+        <p>领养代替购买。这些性格特质，田园猫中同样存在。</p>
+        <p>本报告为参考建议。若遇到兑换或生成异常，请保留订单截图联系客服处理。</p>
       </footer>
     </main>
   );

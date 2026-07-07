@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { personaById, questions } from "@/lib/content";
+import { breedByName, personaById, questions } from "@/lib/content";
 import { db } from "@/lib/db";
 import { generateReportStream, llmModelName } from "@/lib/llm";
+import { detectBreedConflict } from "@/lib/scoring";
 
 export const runtime = "nodejs";
 
@@ -52,6 +53,8 @@ export async function POST(req: Request) {
       await db.releaseReportClaim(sessionId);
       return NextResponse.json({ error: "人格数据缺失,请联系客服" }, { status: 500 });
     }
+    const breedFacts = breedByName(persona.primaryBreed.name);
+    const conflict = detectBreedConflict(persona, session.hardFlags);
 
     // 答题摘要:服务端由题库文本拼装,不含任何用户自由输入
     const answersSummary = session.answers
@@ -74,6 +77,8 @@ export async function POST(req: Request) {
             persona,
             answersSummary,
             hardFlags: session.hardFlags,
+            breedFacts,
+            conflict,
           })) {
             fullText += delta;
             if (!clientGone) {
