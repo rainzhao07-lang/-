@@ -34,13 +34,19 @@ export default function ReportViewer({ sessionId }: { sessionId: string }) {
       });
     }, 24);
 
-    async function run() {
+    // 409 = 服务端有别的请求正在生成(生成锁落库,跨实例有效):轮询等缓存就绪
+    const MAX_PENDING_RETRIES = 10;
+    async function run(attempt = 0) {
       try {
         const res = await fetch("/api/report", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ sessionId }),
         });
+        if (res.status === 409 && attempt < MAX_PENDING_RETRIES) {
+          window.setTimeout(() => void run(attempt + 1), 3000);
+          return;
+        }
         if (!res.ok || !res.body) {
           const data = await res.json().catch(() => null);
           throw new Error((data as { error?: string })?.error ?? "生成失败");
@@ -59,8 +65,10 @@ export default function ReportViewer({ sessionId }: { sessionId: string }) {
         setPhase("error");
       }
     }
+    // startedRef 只防同一组件实例内的重复触发(StrictMode 双 effect);
+    // 跨实例/跨标签页的重复计费由服务端生成锁兜底(409 + 上面的轮询)
     if (!startedRef.current) {
-      startedRef.current = true; // 同一会话只触发一次生成,防止重复请求
+      startedRef.current = true;
       void run();
     }
 
@@ -106,7 +114,7 @@ export default function ReportViewer({ sessionId }: { sessionId: string }) {
   );
 }
 
-/** 极简 Markdown 渲染:只处理 ## 小标题 / - 列表 / 分隔线 / 段落,不引第三方库 */
+/** 极简 Markdown 渲染:只处理 ## 小标题 / 无序与有序列表 / 分隔线 / 段落,不引第三方库 */
 function renderReport(text: string) {
   const blocks = text.split(/\n{2,}/);
   return blocks.map((block, i) => {
@@ -122,8 +130,19 @@ function renderReport(text: string) {
     if (trimmed === "---") {
       return <hr key={i} className="my-5 border-ink/10" />;
     }
+    // 有序列表(LLM 的"3个名字"彩蛋常用 1. 2. 3.)
+    if (/^\d+[.、]\s*/.test(trimmed)) {
+      const items = trimmed.split("\n").filter((l) => /^\d+[.、]/.test(l.trim()));
+      return (
+        <ol key={i} className="mb-4 list-decimal space-y-1.5 pl-5 text-sm leading-relaxed text-ink/85">
+          {items.map((item, j) => (
+            <li key={j}>{stripInlineMarkup(item.trim().replace(/^\d+[.、]\s*/, ""))}</li>
+          ))}
+        </ol>
+      );
+    }
     if (/^[-*]\s/m.test(trimmed)) {
-      const items = trimmed.split("\n").filter((l) => /^[-*\d]/.test(l.trim()));
+      const items = trimmed.split("\n").filter((l) => /^[-*]/.test(l.trim()));
       return (
         <ul key={i} className="mb-4 space-y-1.5 text-sm leading-relaxed text-ink/85">
           {items.map((item, j) => (
@@ -131,7 +150,7 @@ function renderReport(text: string) {
               <span aria-hidden className="text-accent">
                 ·
               </span>
-              <span>{stripInlineMarkup(item.replace(/^[-*]\s*/, ""))}</span>
+              <span>{stripInlineMarkup(item.trim().replace(/^[-*]\s*/, ""))}</span>
             </li>
           ))}
         </ul>

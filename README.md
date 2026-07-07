@@ -50,7 +50,7 @@ npm run check   # typecheck + 单测 + build,提交前必须全绿
 ### 生成兑换码
 
 ```powershell
-Invoke-RestMethod -Method Post -Uri "https://你的域名/api/card/../api/admin/codes" `
+Invoke-RestMethod -Method Post -Uri "https://你的域名/api/admin/codes" `
   -Headers @{ "x-admin-secret" = "你的ADMIN_SECRET" } `
   -ContentType "application/json" -Body '{"count": 100}'
 ```

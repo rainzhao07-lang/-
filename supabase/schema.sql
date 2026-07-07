@@ -1,6 +1,7 @@
 -- 本命猫 H5 数据库 Schema
 -- 在 Supabase SQL Editor 中执行本文件即可完成建表。
--- 注意:服务端使用 service_role key 访问,以下三张表不开放匿名读写(保持默认 RLS 拒绝即可)。
+-- 服务端使用 service_role key 访问(不受 RLS 限制);
+-- 三张表显式开启 RLS 且不建任何 policy → anon key 访问默认全部拒绝。
 
 -- 一次测试会话
 create table sessions (
@@ -22,9 +23,43 @@ create table redeem_codes (
 );
 
 -- 报告缓存(一个会话只生成一次,永不重复计费)
+-- content = '' 的行是"生成中"占位:靠主键的原子插入实现跨实例生成锁
 create table reports (
   session_id uuid primary key references sessions(id),
   content text not null,
   model text,
   created_at timestamptz default now()
 );
+
+-- 显式开启 RLS,不创建任何 policy = 非 service_role 一律拒绝
+alter table sessions enable row level security;
+alter table redeem_codes enable row level security;
+alter table reports enable row level security;
+
+-- 兑换码原子核销:校验码未用 + 标记已用 + 标记 session 已付费,单个事务内完成,
+-- 杜绝"码已核销但 session 未标记付费"的中间态(Codex review P1)。
+create or replace function redeem_code_and_mark_paid(p_code text, p_session uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_rows int;
+begin
+  if not exists (select 1 from sessions where id = p_session) then
+    return false;
+  end if;
+
+  update redeem_codes
+     set used = true, used_by_session = p_session, used_at = now()
+   where code = p_code and used = false;
+  get diagnostics v_rows = row_count;
+  if v_rows = 0 then
+    return false;
+  end if;
+
+  update sessions set paid = true where id = p_session;
+  return true;
+end;
+$$;

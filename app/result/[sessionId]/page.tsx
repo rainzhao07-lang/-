@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import RedeemBox from "@/components/RedeemBox";
 import { personaById } from "@/lib/content";
 import { db } from "@/lib/db";
+import { paymentProvider } from "@/lib/payment/code-redemption";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "我的鉴定结果" };
@@ -18,6 +19,8 @@ export default async function ResultPage({
   if (!session) redirect("/");
   const persona = personaById(session.personaId);
   if (!persona) redirect("/");
+  // 支付入口统一走抽象层:Phase 2 换官方支付时页面不动
+  const payEntry = paymentProvider.getPaymentEntry(sessionId);
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col gap-10 px-6 py-10">
@@ -66,7 +69,7 @@ export default async function ResultPage({
       <RedeemBox
         sessionId={sessionId}
         paid={session.paid}
-        payUrl={process.env.NEXT_PUBLIC_PAY_URL ?? ""}
+        payUrl={payEntry.url ?? ""}
         teaser={persona.freeTeaser}
         breedName={persona.primaryBreed.name}
       />
