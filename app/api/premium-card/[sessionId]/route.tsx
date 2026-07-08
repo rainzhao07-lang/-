@@ -22,6 +22,13 @@ function siteShortLink(): string {
   return raw.replace(/^https?:\/\//, "").replace(/\/$/, "") || "benmingmao.app";
 }
 
+/** 由 sessionId 派生稳定的四位收藏编号(与免费卡一致,仅作收藏感) */
+function cardSerial(seed: string): string {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  return String(1000 + (h % 9000));
+}
+
 /** GET /api/premium-card/[sessionId] — 生成付费高级分享卡 PNG。 */
 export async function GET(
   _req: Request,
@@ -45,6 +52,7 @@ export async function GET(
   const flags = session.premiumFlags!;
   const highlights = buildHighlights(persona, flags);
   const accent = persona.cardTheme.accent;
+  const serial = cardSerial(sessionId);
 
   return new ImageResponse(
     (
@@ -55,6 +63,7 @@ export async function GET(
           display: "flex",
           flexDirection: "column",
           backgroundColor: "#FAF6EF",
+          backgroundImage: `radial-gradient(60% 30% at 50% 0%, ${accent}1c, transparent 70%), radial-gradient(96% 48% at 50% 112%, ${accent}12, transparent 62%)`,
           padding: "70px 66px",
           fontFamily: "CardFont",
           color: "#3E3226",
@@ -133,6 +142,7 @@ export async function GET(
                 backgroundColor: "#FFFFFF",
                 padding: "24px 30px",
                 border: "2px solid rgba(62,50,38,0.08)",
+                borderLeft: `8px solid ${accent}`,
               }}
             >
               <div style={{ display: "flex", fontSize: 24, color: accent, letterSpacing: 4 }}>
@@ -158,7 +168,7 @@ export async function GET(
             专属猫名: {highlights.catName}
           </div>
           <div style={{ display: "flex", fontSize: 28, color: "#8A7B68", letterSpacing: 4 }}>
-            {siteShortLink()}
+            No.{serial} · {siteShortLink()}
           </div>
         </div>
       </div>

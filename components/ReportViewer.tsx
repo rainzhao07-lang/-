@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 
 type Phase = "loading" | "streaming" | "done" | "error";
 
@@ -127,7 +127,11 @@ function renderReport(text: string) {
 
     if (/^#{1,3}\s/.test(trimmed)) {
       return (
-        <h2 key={index} className="mb-3 mt-6 text-lg font-bold text-accentDeep first:mt-0">
+        <h2
+          key={index}
+          className="mb-3 mt-7 flex items-center gap-2.5 text-lg font-bold text-accentDeep first:mt-0"
+        >
+          <span aria-hidden className="inline-block h-5 w-1.5 shrink-0 rounded-full bg-accent" />
           {trimmed.replace(/^#{1,3}\s*/, "")}
         </h2>
       );
@@ -142,7 +146,7 @@ function renderReport(text: string) {
       return (
         <ol key={index} className="mb-4 list-decimal space-y-1.5 pl-5 text-sm leading-relaxed text-ink/85">
           {items.map((item, itemIndex) => (
-            <li key={itemIndex}>{stripInlineMarkup(item.trim().replace(/^\d+[.、]\s*/, ""))}</li>
+            <li key={itemIndex}>{renderInline(item.trim().replace(/^\d+[.、]\s*/, ""))}</li>
           ))}
         </ol>
       );
@@ -157,7 +161,7 @@ function renderReport(text: string) {
               <span aria-hidden className="text-accent">
                 ·
               </span>
-              <span>{stripInlineMarkup(item.trim().replace(/^[-*]\s*/, ""))}</span>
+              <span>{renderInline(item.trim().replace(/^[-*]\s*/, ""))}</span>
             </li>
           ))}
         </ul>
@@ -166,12 +170,28 @@ function renderReport(text: string) {
 
     return (
       <p key={index} className="mb-4 text-[15px] leading-[1.9] text-ink/85">
-        {stripInlineMarkup(trimmed)}
+        {renderInline(trimmed)}
       </p>
     );
   });
 }
 
-function stripInlineMarkup(value: string): string {
-  return value.replace(/\*\*(.+?)\*\*/g, "$1").replace(/\*(.+?)\*/g, "$1");
+/** 行内渲染:**加粗** 渲染为强调,其余按纯文本(顺带去掉落单的 * 标记) */
+function renderInline(text: string): ReactNode[] {
+  const nodes: ReactNode[] = [];
+  const re = /\*\*(.+?)\*\*/g;
+  let last = 0;
+  let key = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) nodes.push(text.slice(last, m.index).replace(/\*/g, ""));
+    nodes.push(
+      <strong key={key++} className="font-bold text-ink">
+        {m[1]}
+      </strong>,
+    );
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) nodes.push(text.slice(last).replace(/\*/g, ""));
+  return nodes;
 }
