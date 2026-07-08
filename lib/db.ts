@@ -29,6 +29,11 @@ export type ReportRecord = {
   model: string | null;
 };
 
+export type InsertCodesMeta = {
+  channel: string;
+  batch: string;
+};
+
 /** claimReportGeneration 的三种结果:拿到生成权 / 已有缓存 / 别人正在生成 */
 export type ReportClaim =
   | { status: "claimed" }
@@ -47,7 +52,7 @@ export interface Db {
   savePremiumAnswers(sessionId: string, answers: number[], premiumFlags: PremiumFlags): Promise<SessionRecord | null>;
   /** 原子核销:码存在且未用 → 标记已用 + session.paid=true,单事务完成。成功返回 true。 */
   redeemCode(code: string, sessionId: string): Promise<boolean>;
-  insertCodes(codes: string[]): Promise<void>;
+  insertCodes(codes: string[], meta?: InsertCodesMeta): Promise<void>;
   /**
    * 抢占报告生成权(跨实例安全)。基础设施错误直接抛,调用方应返回 503,
    * 绝不能把异常当成"无缓存"继续生成。
@@ -116,8 +121,12 @@ function supabaseDb(url: string, serviceRoleKey: string): Db {
       return data === true;
     },
 
-    async insertCodes(codes) {
-      const rows = codes.map((code) => ({ code }));
+    async insertCodes(codes, meta) {
+      const rows = codes.map((code) => ({
+        code,
+        channel: meta?.channel ?? "manual",
+        batch: meta?.batch ?? "default",
+      }));
       const { error } = await client.from("redeem_codes").insert(rows);
       if (error) throw new Error(`insertCodes failed: ${error.message}`);
     },
@@ -205,7 +214,7 @@ function rowToSession(row: Record<string, unknown>): SessionRecord {
 
 type MemoryStore = {
   sessions: Map<string, SessionRecord>;
-  codes: Map<string, { used: boolean; usedBySession?: string }>;
+  codes: Map<string, { used: boolean; disabled: boolean; usedBySession?: string; channel: string; batch: string }>;
   reports: Map<string, ReportRecord>;
   pendingReports: Map<string, number>; // sessionId → 抢占时间戳
 };
@@ -253,7 +262,7 @@ function memoryDb(): Db {
     async redeemCode(code, sessionId) {
       const entry = store.codes.get(code);
       const session = store.sessions.get(sessionId);
-      if (!entry || entry.used || !session) return false;
+      if (!entry || entry.used || entry.disabled || !session) return false;
       entry.used = true;
       entry.usedBySession = sessionId;
       session.paid = true;
@@ -261,10 +270,15 @@ function memoryDb(): Db {
       return true;
     },
 
-    async insertCodes(codes) {
+    async insertCodes(codes, meta) {
       for (const code of codes) {
         if (store.codes.has(code)) throw new Error(`duplicate code: ${code}`);
-        store.codes.set(code, { used: false });
+        store.codes.set(code, {
+          used: false,
+          disabled: false,
+          channel: meta?.channel ?? "manual",
+          batch: meta?.batch ?? "default",
+        });
       }
     },
 

@@ -49,13 +49,29 @@ npm run check   # typecheck + 单测 + build,提交前必须全绿
 
 ### 生成兑换码
 
+少量临时码可以直接调用后台接口:
+
 ```powershell
 Invoke-RestMethod -Method Post -Uri "https://你的域名/api/admin/codes" `
   -Headers @{ "x-admin-secret" = "你的ADMIN_SECRET" } `
-  -ContentType "application/json" -Body '{"count": 100}'
+  -ContentType "application/json" -Body '{"count": 100, "channel": "xiaohongshu", "batch": "xhs-20260708-001"}'
 ```
 
 返回的 `codes` 列表拿去面包多/发卡网配置"自动发货"。一码一次性核销。
+
+小红书/批量发货建议用离线码库脚本,它会生成 CSV + Supabase SQL:
+
+```powershell
+npm run codes:generate -- --count=10000 --channel=xiaohongshu --batch=xhs-20260708-001 --site=https://你的正式域名
+```
+
+输出目录默认在项目上一层桌面目录,包含:
+
+- `benmingmao-codes-*.csv`: 给小红书/发卡平台导入,含兑换码、入口链接、发货文案。
+- `import-redeem-codes-*.sql`: 在 Supabase SQL Editor 执行,把这批码写入 `redeem_codes` 表。
+- `使用说明.md`: 这批码的操作说明。
+
+注意:生成出来的兑换码等同于付费权益,不要提交到 GitHub。
 
 ### 分享卡字体
 
@@ -68,7 +84,7 @@ Invoke-RestMethod -Method Post -Uri "https://你的域名/api/admin/codes" `
 
 1. 推送仓库 → Vercel 导入,配置上表全部环境变量
 2. Supabase SQL Editor 执行 `supabase/schema.sql`
-3. 绑定自有域名;上线后调 `/api/admin/codes` 生成首批码,配置到发卡平台
+3. 绑定自有域名;上线后用 `npm run codes:generate` 生成首批码,执行 SQL 导入 Supabase,再把 CSV 配置到发卡平台
 4. 验证:真机微信内置浏览器走通 答题→保存卡片→兑换→付费定制题→报告
 
 ## Phase 2 预留

@@ -9,6 +9,7 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "font:subset": "node scripts/subset-font.mjs",
+    "codes:generate": "node scripts/generate-redeem-codes.mjs",
     "check": "npm run typecheck && npm run test && npm run build"
   },
   "dependencies": {

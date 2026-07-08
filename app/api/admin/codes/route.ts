@@ -100,7 +100,7 @@ export async function POST(req: Request) {
   while (codes.size < count) codes.add(randomCode());
   const list = [...codes];
 
-  await db.insertCodes(list);
+  await db.insertCodes(list, { channel, batch });
 
   if (format === "csv") {
     const filenameBatch = safeFilenamePart(batch);

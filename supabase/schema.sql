@@ -19,7 +19,11 @@ create table sessions (
 -- 兑换码
 create table redeem_codes (
   code text primary key,             -- 默认生成12位大写字母数字
+  channel text not null default 'manual',
+  batch text not null default 'default',
   used boolean not null default false,
+  disabled boolean not null default false,
+  disabled_reason text,
   used_by_session uuid references sessions(id),
   used_at timestamptz,
   created_at timestamptz default now()
@@ -38,6 +42,13 @@ create table reports (
 alter table sessions add column if not exists premium_answers jsonb;
 alter table sessions add column if not exists premium_flags jsonb;
 alter table sessions add column if not exists user_tier text not null default 'free';
+alter table redeem_codes add column if not exists channel text not null default 'manual';
+alter table redeem_codes add column if not exists batch text not null default 'default';
+alter table redeem_codes add column if not exists disabled boolean not null default false;
+alter table redeem_codes add column if not exists disabled_reason text;
+
+create index if not exists redeem_codes_channel_batch_idx on redeem_codes(channel, batch);
+create index if not exists redeem_codes_used_idx on redeem_codes(used);
 
 -- 显式开启 RLS,不创建任何 policy = 非 service_role 一律拒绝
 alter table sessions enable row level security;
@@ -61,7 +72,7 @@ begin
 
   update redeem_codes
      set used = true, used_by_session = p_session, used_at = now()
-   where code = p_code and used = false;
+   where code = p_code and used = false and disabled = false;
   get diagnostics v_rows = row_count;
   if v_rows = 0 then
     return false;
