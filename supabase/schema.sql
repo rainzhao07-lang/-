@@ -4,7 +4,7 @@
 -- 三张表显式开启 RLS 且不建任何 policy → anon key 访问默认全部拒绝。
 
 -- 一次测试会话
-create table sessions (
+create table if not exists sessions (
   id uuid primary key default gen_random_uuid(),
   answers jsonb not null,            -- 12题答案数组(选项下标)
   persona_id text not null,          -- 计分结果
@@ -17,7 +17,7 @@ create table sessions (
 );
 
 -- 兑换码
-create table redeem_codes (
+create table if not exists redeem_codes (
   code text primary key,             -- 默认生成12位大写字母数字
   channel text not null default 'manual',
   batch text not null default 'default',
@@ -31,7 +31,7 @@ create table redeem_codes (
 
 -- 报告缓存(一个会话只生成一次,永不重复计费)
 -- content = '' 的行是"生成中"占位:靠主键的原子插入实现跨实例生成锁
-create table reports (
+create table if not exists reports (
   session_id uuid primary key references sessions(id),
   content text not null,
   model text,
