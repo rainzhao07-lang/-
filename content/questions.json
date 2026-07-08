@@ -11,7 +11,7 @@
   },
   {
     "id": "q2",
-    "text": "熟人聊起你，最常出现的评价是？",
+    "text": "朋友聊起你，最常说的一句话是？",
     "options": [
       { "text": "「话不多，但特别靠谱」", "weights": { "harbor_keeper": 3, "snow_hermit": 1 }, "flags": {} },
       { "text": "「有点神秘，越熟越好玩」", "weights": { "snow_hermit": 2, "midnight_curator": 2 }, "flags": {} },
@@ -51,7 +51,7 @@
   },
   {
     "id": "q6",
-    "text": "你现在（或准备养猫时）的居住空间更像哪种？",
+    "text": "你现在住的地方更像哪种？",
     "options": [
       { "text": "合租房里的一间，东西已经很多了", "weights": {}, "flags": { "space": "small" } },
       { "text": "独立小户型，一人天地，能慢慢布置", "weights": { "city_observer": 1 }, "flags": { "space": "medium" } },
@@ -100,7 +100,7 @@
   },
   {
     "id": "q11",
-    "text": "如果它半夜突然不舒服，要去急诊，你的第一反应是？",
+    "text": "如果猫半夜突然不舒服，要去急诊，你的第一反应是？",
     "options": [
       { "text": "拔腿就冲，钱之后再说", "weights": { "velvet_commander": 2, "dawn_expeditioner": 1 }, "flags": { "medical_buffer": "high" } },
       { "text": "心疼但能安排，先把问题解决", "weights": { "harbor_keeper": 2, "city_observer": 1 }, "flags": { "medical_buffer": "mid" } },

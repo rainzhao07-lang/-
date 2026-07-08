@@ -18,13 +18,13 @@ export default function LandingPage() {
           住着哪只猫
         </h1>
         <p className="anim-fade-up-delay-2 text-base leading-relaxed text-soft">
-          先看基础结果，再用兑换码解锁深度报告。
+          16 道题，比你自己更懂你适合哪只毛孩子。
           <br />
-          帮你更冷静地判断自己适合怎样的猫。
+          帮你在心动养猫之前，先想清楚。
         </p>
 
         <div className="anim-fade-up-delay-2 rounded-full border border-accent/40 bg-milk px-5 py-2 text-sm font-medium text-accentDeep">
-          基础结果免费 · 深度报告凭兑换码解锁
+          基础结果免费 · 兑换码解锁专属养猫决策报告
         </div>
 
         <div className="anim-fade-up-delay-3 mt-2 flex w-full max-w-xs flex-col gap-3">

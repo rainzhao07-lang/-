@@ -23,6 +23,45 @@ function siteShortLink(): string {
   return raw.replace(/^https?:\/\//, "").replace(/\/$/, "") || "benmingmao.app";
 }
 
+/** 由 sessionId 派生一个稳定的四位收藏编号(仅作卡面收藏感,非人数统计) */
+function cardSerial(seed: string): string {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  return String(1000 + (h % 9000));
+}
+
+/** CSS 绘制的猫爪印(纯形状,无 emoji/外链),作卡面装饰分隔 */
+function PawMark({ color }: { color: string }) {
+  const toe = (raised: number) => ({
+    display: "flex",
+    width: 26,
+    height: 26,
+    borderRadius: 999,
+    backgroundColor: color,
+    marginBottom: raised,
+  });
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 10 }}>
+        <div style={toe(2)} />
+        <div style={toe(12)} />
+        <div style={toe(12)} />
+        <div style={toe(2)} />
+      </div>
+      <div
+        style={{
+          display: "flex",
+          width: 78,
+          height: 58,
+          borderRadius: 999,
+          backgroundColor: color,
+          marginTop: 6,
+        }}
+      />
+    </div>
+  );
+}
+
 /** GET /api/card/[sessionId] — 生成免费分享卡 PNG;sessionId=demo 时出示例卡(用于 og:image) */
 export async function GET(
   _req: Request,
@@ -48,6 +87,7 @@ export async function GET(
   }
 
   const { bg, accent } = persona.cardTheme;
+  const serial = cardSerial(sessionId);
 
   return new ImageResponse(
     (
@@ -60,7 +100,8 @@ export async function GET(
           justifyContent: "space-between",
           alignItems: "center",
           backgroundColor: bg,
-          padding: "96px 72px",
+          backgroundImage: `radial-gradient(62% 34% at 50% 0%, ${accent}22, transparent 70%), radial-gradient(98% 52% at 50% 112%, ${accent}14, transparent 62%)`,
+          padding: "78px 66px",
           fontFamily: "CardFont",
           color: "#3E3226",
           position: "relative",
@@ -70,30 +111,39 @@ export async function GET(
         <div
           style={{
             position: "absolute",
-            top: 40,
-            left: 40,
-            right: 40,
-            bottom: 40,
+            top: 36,
+            left: 36,
+            right: 36,
+            bottom: 36,
             border: `3px solid ${accent}`,
-            opacity: 0.35,
-            borderRadius: 28,
+            opacity: 0.32,
+            borderRadius: 30,
           }}
         />
 
-        {/* 顶部品牌名 */}
-        <div style={{ display: "flex", fontSize: 34, letterSpacing: 14, color: accent }}>
-          本命猫鉴定所
+        {/* 顶部:品牌名 + 收藏编号 */}
+        <div style={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ display: "flex", fontSize: 30, letterSpacing: 10, color: accent }}>
+            本命猫鉴定所
+          </div>
+          <div
+            style={{
+              display: "flex",
+              fontSize: 24,
+              letterSpacing: 3,
+              color: accent,
+              border: `2px solid ${accent}`,
+              borderRadius: 999,
+              padding: "6px 18px",
+              opacity: 0.85,
+            }}
+          >
+            No.{serial}
+          </div>
         </div>
 
-        {/* 中部:称号 + 品种 */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 34,
-          }}
-        >
+        {/* 中部:称号 + 猫爪 + 品种 */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 26 }}>
           <div
             style={{
               display: "flex",
@@ -107,32 +157,36 @@ export async function GET(
           >
             {persona.subtitle}
           </div>
-          <div style={{ display: "flex", fontSize: 124, letterSpacing: 10 }}>{persona.title}</div>
-          <div style={{ display: "flex", width: 120, height: 5, backgroundColor: accent, borderRadius: 3 }} />
+          <div style={{ display: "flex", fontSize: 126, letterSpacing: 10 }}>{persona.title}</div>
+          <PawMark color={accent} />
           <div style={{ display: "flex", fontSize: 32, color: "#8A7B68", letterSpacing: 6 }}>
             你的本命猫
           </div>
-          <div style={{ display: "flex", fontSize: 72, color: accent, letterSpacing: 4 }}>
+          <div style={{ display: "flex", fontSize: 74, color: accent, letterSpacing: 4 }}>
             {persona.primaryBreed.name}
           </div>
         </div>
 
-        {/* 判词:卡面视觉重心 */}
+        {/* 判词:柔和面板,提高对比与截图质感 */}
         <div
           style={{
             display: "flex",
-            maxWidth: 860,
+            maxWidth: 904,
+            padding: "34px 44px",
+            borderRadius: 28,
+            backgroundColor: "rgba(255,255,255,0.55)",
+            border: "2px solid rgba(255,255,255,0.72)",
             fontSize: 46,
-            lineHeight: 1.75,
+            lineHeight: 1.7,
             textAlign: "center",
-            color: "#4A3F33",
+            color: "#3E3226",
           }}
         >
           {`「${persona.verdict}」`}
         </div>
 
         {/* 底部:短链 + 引流文案 */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
           <div style={{ display: "flex", fontSize: 34, letterSpacing: 5, color: "#5C5142" }}>
             测测你内心住着哪只猫
           </div>
