@@ -13,3 +13,5 @@ assets/fonts-src/
 
 # Local deployment/tool cache
 .tools/
+.deploy-tools/
+.pnpm-store/
