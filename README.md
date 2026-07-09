@@ -65,10 +65,18 @@ Invoke-RestMethod -Method Post -Uri "https://你的域名/api/admin/codes" `
 npm run codes:generate -- --count=10000 --channel=xiaohongshu --batch=xhs-20260708-001 --site=https://你的正式域名
 ```
 
+内测码建议单独批次生成,不要和正式发货码混用:
+
+```powershell
+npm run codes:generate -- --count=50 --channel=internal-test --batch=internal-test-YYYYMMDD-001 --site=https://benmingmao-h5.netlify.app
+```
+
 输出目录默认在项目上一层桌面目录,包含:
 
 - `benmingmao-codes-*.csv`: 给小红书/发卡平台导入,含兑换码、入口链接、发货文案。
 - `import-redeem-codes-*.sql`: 在 Supabase SQL Editor 执行,把这批码写入 `redeem_codes` 表。
+- `codes-only-*.txt`: 只有兑换码本体,适合内部测试或导入卡密库。
+- `delivery-messages-*.txt`: 每个码一段完整私信文案,适合直接发给内测伙伴。
 - `使用说明.md`: 这批码的操作说明。
 
 注意:生成出来的兑换码等同于付费权益,不要提交到 GitHub。

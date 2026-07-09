@@ -95,6 +95,15 @@ function redeemUrl(site, code) {
   return base ? `${base}/redeem?code=${encodeURIComponent(code)}` : `/redeem?code=${encodeURIComponent(code)}`;
 }
 
+function deliveryText(site, code) {
+  return [
+    `本命猫兑换码：${code}`,
+    `测试入口：${redeemUrl(site, code)}`,
+    "打开链接后完成测试，在「解锁报告/兑换码」处输入兑换码即可。",
+    "兑换码仅限使用一次，请勿公开转发。",
+  ].join("\n");
+}
+
 function csvCell(value) {
   const safe = /^[=+\-@]/.test(value) ? `'${value}` : value;
   return `"${safe.replace(/"/g, '""')}"`;
@@ -108,10 +117,18 @@ function buildCsv(codes, { site, channel, batch }) {
       redeemUrl(site, code),
       channel,
       batch,
-      `兑换码：${code}\n测试入口：${redeemUrl(site, code)}\n完成测试后点击“解锁报告”即可使用。`,
+      deliveryText(site, code),
     ]),
   ];
   return `${rows.map((row) => row.map(csvCell).join(",")).join("\n")}\n`;
+}
+
+function buildCodesOnly(codes) {
+  return `${codes.join("\n")}\n`;
+}
+
+function buildDeliveryMessages(codes, site) {
+  return `${codes.map((code, index) => `#${index + 1}\n${deliveryText(site, code)}`).join("\n\n---\n\n")}\n`;
 }
 
 function sqlString(value) {
@@ -157,32 +174,35 @@ function buildSql(codes, { channel, batch }) {
   ].join("\n");
 }
 
-function buildReadme({ count, channel, batch, site, csvName, sqlName }) {
+function buildReadme({ count, channel, batch, site, csvName, sqlName, codesName, messagesName }) {
   return [
     "# 本命猫兑换码库",
     "",
     `批次: ${batch}`,
     `渠道: ${channel}`,
     `数量: ${count}`,
-    `测试入口: ${site || "未填写,CSV 中使用相对路径 /redeem?code=..."}`,
+    `测试入口: ${site || "未填写；CSV 中会使用相对路径 /redeem?code=..."}`,
     "",
     "## 文件说明",
     "",
-    `- ${csvName}: 给小红书/发卡平台使用,包含兑换码、入口链接和发货文案。`,
-    `- ${sqlName}: 导入 Supabase 的 SQL,导入后系统才能自动识别这些兑换码。`,
+    `- ${csvName}: 给小红书、发卡平台或表格管理使用，包含兑换码、入口链接和完整发货文案。`,
+    `- ${codesName}: 只有兑换码本体，适合复制给内部测试或导入卡密库。`,
+    `- ${messagesName}: 每个兑换码对应一段可直接私信发送的完整文案。`,
+    `- ${sqlName}: 导入 Supabase 的 SQL，导入后系统才能自动识别这些兑换码。`,
     "",
     "## 使用顺序",
     "",
-    "1. 先在 Supabase SQL Editor 执行项目里的 `supabase/schema.sql`,确保表结构和核销函数是最新版。",
+    "1. 先在 Supabase SQL Editor 执行项目里的 `supabase/schema.sql`，确保表结构和核销函数是最新版本。",
     `2. 再执行本文件夹里的 \`${sqlName}\`。`,
-    "3. 把 CSV 里的 `delivery_text` 作为小红书发货文案。",
-    "4. 用户输入兑换码后,系统会检查 `redeem_codes` 表:未使用、未禁用才可核销;成功后立刻标记 `used=true`。",
+    "3. 内测时可以直接复制 `delivery-messages-*.txt` 里的单条文案发给测试伙伴。",
+    "4. 正式发货时，把 CSV 里的 `delivery_text` 作为自动发货文案，或把 `code` 列导入卡密库。",
+    "5. 用户输入兑换码后，系统会检查 `redeem_codes` 表；未使用、未禁用才可核销，成功后立即标记 `used=true`。",
     "",
     "## 注意",
     "",
-    "- 这些码等同于付费权益,不要提交到 GitHub。",
-    "- 如果正式域名变化,码本身仍可用,只需要更新发货文案里的入口链接。",
-    "- 退款或异常订单可以在 Supabase 中把对应码 `disabled=true`。",
+    "- 这些码等同于付费权益，不要提交到 GitHub，也不要公开发到社群。",
+    "- 如果正式域名变化，兑换码本身仍可用，只需要更新发货文案里的入口链接。",
+    "- 退款或异常订单可以在 Supabase 中把对应码设置为 `disabled=true`。",
     "",
   ].join("\n");
 }
@@ -207,14 +227,18 @@ async function main() {
   const fileBase = safeFilenamePart(batch);
   const csvName = `benmingmao-codes-${fileBase}.csv`;
   const sqlName = `import-redeem-codes-${fileBase}.sql`;
+  const codesName = `codes-only-${fileBase}.txt`;
+  const messagesName = `delivery-messages-${fileBase}.txt`;
   const readmeName = "使用说明.md";
 
   await mkdir(outDir, { recursive: true });
   await writeFile(path.join(outDir, csvName), `\uFEFF${buildCsv(codes, { site, channel, batch })}`, "utf8");
   await writeFile(path.join(outDir, sqlName), buildSql(codes, { channel, batch }), "utf8");
+  await writeFile(path.join(outDir, codesName), buildCodesOnly(codes), "utf8");
+  await writeFile(path.join(outDir, messagesName), buildDeliveryMessages(codes, site), "utf8");
   await writeFile(
     path.join(outDir, readmeName),
-    buildReadme({ count, channel, batch, site, csvName, sqlName }),
+    buildReadme({ count, channel, batch, site, csvName, sqlName, codesName, messagesName }),
     "utf8",
   );
 
@@ -227,7 +251,7 @@ async function main() {
         batch,
         site,
         outDir,
-        files: [csvName, sqlName, readmeName],
+        files: [csvName, sqlName, codesName, messagesName, readmeName],
       },
       null,
       2,
