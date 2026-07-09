@@ -6,7 +6,7 @@
 
 ## 技术栈
 
-Next.js 15 (App Router) + TypeScript + Tailwind CSS | Supabase (Postgres) | 本地规则报告生成器 | next/og 分享卡 | Vercel 部署
+Next.js 15 (App Router) + TypeScript + Tailwind CSS | Supabase (Postgres) | 本地规则报告生成器 | next/og 分享卡 | Netlify 部署
 
 ## 本地开发
 
@@ -88,12 +88,15 @@ npm run codes:generate -- --count=50 --channel=internal-test --batch=internal-te
 1. 从 Releases 下载 `LXGWWenKai-Regular.ttf` 放到 `assets/fonts-src/`
 2. `npm run font:subset` → 生成 `assets/fonts/card-font.ttf`(约260KB,入库)
 
-## 部署(Vercel)
+## 部署(Netlify)
 
-1. 推送仓库 → Vercel 导入,配置上表全部环境变量
-2. Supabase SQL Editor 执行 `supabase/schema.sql`
-3. 绑定自有域名;上线后用 `npm run codes:generate` 生成首批码,执行 SQL 导入 Supabase,再把 CSV 配置到发卡平台
-4. 验证:真机微信内置浏览器走通 答题→保存卡片→兑换→付费定制题→报告
+当前生产测试地址为 [https://benmingmao-h5.netlify.app](https://benmingmao-h5.netlify.app)，Netlify Site ID 为 `aa243315-f668-497e-b9a0-70e726e819fe`。仓库的 `netlify.toml` 已配置 `@netlify/plugin-nextjs`，不要删除该插件，否则 App Router 的动态路由和 API 会回到 404。
+
+1. 推送仓库后，在 Netlify 的部署记录中确认该次构建已完成；不要假定每个 GitHub 推送都一定自动发布。
+2. 在 Netlify 的环境变量中配置上表全部生产变量，尤其是 `SUPABASE_URL`、`SUPABASE_SERVICE_ROLE_KEY`、`ADMIN_SECRET` 与 `NEXT_PUBLIC_SITE_URL`。
+3. Supabase SQL Editor 执行 `supabase/schema.sql`；新项目必须先建表和 `redeem_code_and_mark_paid` 核销函数。
+4. 绑定自有域名后，更新 `NEXT_PUBLIC_SITE_URL` 并重新部署。正式发货前用 `npm run codes:generate` 生成首批码，执行生成的 SQL 导入 Supabase，再把适用的 TXT/CSV 配置到发卡平台。
+5. 验证：真机微信内置浏览器走通 答题 → 保存卡片 → 兑换 → 付费定制题 → 报告。每次上线前运行 `npm run check`。
 
 ## Phase 2 预留
 
