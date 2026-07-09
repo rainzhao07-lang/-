@@ -1,5 +1,6 @@
-import { randomInt, timingSafeEqual } from "node:crypto";
+import { randomInt } from "node:crypto";
 import { NextResponse } from "next/server";
+import { adminSecretMatches, hasAdminSecret } from "@/lib/admin-auth";
 import { db } from "@/lib/db";
 
 export const runtime = "nodejs";
@@ -23,12 +24,6 @@ function randomCode(): string {
   return code;
 }
 
-function secretMatches(provided: string, expected: string): boolean {
-  const a = Buffer.from(provided);
-  const b = Buffer.from(expected);
-  if (a.length !== b.length) return false;
-  return timingSafeEqual(a, b);
-}
 
 function normalizeLabel(value: unknown, fallback: string, maxLength: number) {
   if (typeof value !== "string") return fallback;
@@ -70,13 +65,12 @@ function safeFilenamePart(value: string) {
 }
 
 export async function POST(req: Request) {
-  const expected = process.env.ADMIN_SECRET;
-  if (!expected) {
+  if (!hasAdminSecret()) {
     return NextResponse.json({ error: "服务端未配置 ADMIN_SECRET" }, { status: 500 });
   }
 
   const provided = req.headers.get("x-admin-secret") ?? "";
-  if (!secretMatches(provided, expected)) {
+  if (!adminSecretMatches(provided)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 

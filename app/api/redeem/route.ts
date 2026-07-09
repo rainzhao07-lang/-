@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { paymentProvider } from "@/lib/payment/code-redemption";
 import { allowRequest } from "@/lib/rate-limit";
+import { redeemSharedAccessCode } from "@/lib/shared-access-redemption";
 
 export const runtime = "nodejs";
 
@@ -38,12 +39,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true });
     }
 
-    const ok = await paymentProvider.verify(sessionId, code);
-    if (!ok) {
+    const oneTimeRedeemed = await paymentProvider.verify(sessionId, code);
+    if (oneTimeRedeemed) {
+      return NextResponse.json({ ok: true, mode: "one_time" });
+    }
+
+    const sharedRedeemed = await redeemSharedAccessCode(sessionId, code);
+    if (!sharedRedeemed) {
       return NextResponse.json({ error: "兑换码无效或已使用" }, { status: 400 });
     }
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, mode: "shared" });
   } catch (err) {
     console.error(`[redeem] infrastructure error session=${sessionId}:`, err);
     return NextResponse.json({ error: "服务暂时不可用，请稍后重试" }, { status: 503 });
