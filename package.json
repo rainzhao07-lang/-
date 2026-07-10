@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "font:subset": "node scripts/subset-font.mjs",
     "codes:generate": "node scripts/generate-redeem-codes.mjs",
-    "check": "npm run typecheck && npm run test && npm run build"
+    "distribution:check": "node scripts/distribution-check.mjs",
+    "check": "npm run typecheck && npm run test && npm run distribution:check && npm run build"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

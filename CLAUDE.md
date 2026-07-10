@@ -21,6 +21,7 @@
 - 付费报告由 `lib/local-report.ts` 本地规则生成,不依赖外部内容生成接口
 - 支付走抽象接口(`lib/payment/`),MVP 为兑换码,Phase 2 换官方支付不动业务代码
 - 改 `content/personas.json` 后必须重跑 `npm run font:subset`(分享卡字体是按内容子集化的)
+- 改 `content/questions.json` 的 weights 后必须跑 `npm run distribution:check`(蒙特卡洛验证 8 人格分布比值 ≤ 2.5)。该脚本已挂进 `npm run check` 作为门禁——**独立脚本 ≠ 交付残留,删除任何 scripts/ 下的文件前先查 package.json 和文档引用,并在提交信息里单独说明删除理由**(2026-07-09 曾误删本脚本)
 
 ## 本地开发的两个兜底(不影响生产行为)
 - 未配 SUPABASE_URL → 内存数据库(重启即失)

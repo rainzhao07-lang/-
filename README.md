@@ -46,6 +46,7 @@ npm run check   # typecheck + 单测 + build,提交前必须全绿
 - **报告生成器**:`lib/local-report.ts` —— 本地规则和文案模块,不调用外部内容生成接口
 - ⚠️ 改完 `personas.json` 必须重跑 `npm run font:subset`(分享卡字体按内容子集化,否则新字符不显示),然后重新部署
 - 改完跑 `npm run test`:单测会自动校验数据完整性(weights 指向的人格存在、每个人格都能胜出等)
+- 改完题库 `weights` 再跑 `npm run distribution:check`:蒙特卡洛模拟 50 万次答题,验证没有人格被挤到"几乎测不出来"(最高/最低占比 ≤ 2.5)。此检查也包含在 `npm run check` 里,提交前自动把关
 
 ### 生成兑换码
 
