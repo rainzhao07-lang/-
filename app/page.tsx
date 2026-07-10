@@ -31,14 +31,14 @@ export default function LandingPage() {
           <Link
             href="/quiz"
             prefetch
-            className="w-full rounded-full bg-accent py-4 text-center text-lg font-bold text-white shadow-lg shadow-accent/30 transition duration-150 ease-out hover:-translate-y-0.5 hover:shadow-xl hover:shadow-accent/40 active:scale-95"
+            className="pressable w-full rounded-full bg-accent py-4 text-center text-lg font-bold text-white shadow-lg shadow-accent/30 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-accent/40"
           >
             开始免费测试
           </Link>
           <Link
             href="/redeem"
             prefetch
-            className="w-full rounded-full border border-accent/40 bg-white py-3 text-center text-sm font-bold text-accentDeep transition duration-150 ease-out hover:-translate-y-0.5 hover:border-accent active:scale-95"
+            className="pressable w-full rounded-full border border-accent/40 bg-white py-3 text-center text-sm font-bold text-accentDeep hover:-translate-y-0.5 hover:border-accent"
           >
             我已有兑换码
           </Link>

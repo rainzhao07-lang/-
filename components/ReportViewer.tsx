@@ -86,7 +86,7 @@ export default function ReportViewer({ sessionId }: { sessionId: string }) {
         <p className="text-sm text-soft">{errorMessage}</p>
         <button
           onClick={() => window.location.reload()}
-          className="rounded-full bg-accent px-8 py-3 font-bold text-white active:scale-95"
+          className="pressable rounded-full bg-accent px-8 py-3 font-bold text-white"
         >
           刷新重试
         </button>

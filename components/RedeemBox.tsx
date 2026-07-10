@@ -56,7 +56,7 @@ export default function RedeemBox({
         </p>
         <button
           onClick={() => router.push(hasPremiumCustomization ? `/report/${sessionId}` : `/premium-quiz/${sessionId}`)}
-          className="mt-4 w-full rounded-full bg-accent py-3 font-bold text-white active:scale-95"
+          className="pressable mt-4 w-full rounded-full bg-accent py-3 font-bold text-white"
         >
           {hasPremiumCustomization ? "查看我的养猫决策报告" : "完成定制问题"}
         </button>
@@ -122,7 +122,7 @@ export default function RedeemBox({
             href={payUrl}
             target="_blank"
             rel="noreferrer"
-            className="rounded-full bg-accent py-3.5 text-center font-bold text-white transition active:scale-95"
+            className="pressable rounded-full bg-accent py-3.5 text-center font-bold text-white"
           >
             去商城获取兑换码
           </a>
@@ -135,7 +135,7 @@ export default function RedeemBox({
         {!showInput ? (
           <button
             onClick={() => setShowInput(true)}
-            className="rounded-full border border-cream/30 py-3 text-sm text-cream/90 active:scale-95"
+            className="pressable rounded-full border border-cream/30 py-3 text-sm text-cream/90"
           >
             我已有兑换码
           </button>
@@ -161,7 +161,7 @@ export default function RedeemBox({
             <button
               onClick={() => void redeem()}
               disabled={pending || code.length < 8}
-              className="rounded-full bg-accent py-3 font-bold text-white transition active:scale-95 disabled:opacity-50"
+              className="pressable rounded-full bg-accent py-3 font-bold text-white disabled:opacity-50"
             >
               {pending ? "验证中..." : "解锁报告"}
             </button>

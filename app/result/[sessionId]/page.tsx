@@ -66,7 +66,7 @@ export default async function ResultPage({
         <a
           href={`/api/card/${sessionId}`}
           download="benmingmao-card.png"
-          className="w-full max-w-xs rounded-full border-2 border-accent py-3 text-center font-bold text-accentDeep transition active:scale-95"
+          className="pressable w-full max-w-xs rounded-full border-2 border-accent py-3 text-center font-bold text-accentDeep"
         >
           保存分享卡
         </a>

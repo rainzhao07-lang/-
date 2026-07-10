@@ -47,7 +47,7 @@ export default async function ReportPage({
         <a
           href={`/api/premium-card/${sessionId}`}
           download="benmingmao-premium-card.png"
-          className="w-full max-w-xs rounded-full border-2 border-accent py-3 text-center font-bold text-accentDeep active:scale-95"
+          className="pressable w-full max-w-xs rounded-full border-2 border-accent py-3 text-center font-bold text-accentDeep"
         >
           保存高级分享卡
         </a>

@@ -99,7 +99,7 @@ export default function QuizFlow() {
         <p className="text-soft">{error}</p>
         <button
           onClick={() => void submit(answers)}
-          className="rounded-full bg-accent px-8 py-3 font-bold text-white active:scale-95"
+          className="pressable rounded-full bg-accent px-8 py-3 font-bold text-white"
         >
           重试
         </button>
@@ -131,7 +131,7 @@ export default function QuizFlow() {
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-milk">
         <div
-          className="h-full rounded-full bg-accent transition-[width] duration-500 ease-out"
+          className="h-full rounded-full bg-accent transition-[width] duration-700 ease-[var(--ease-sheet)]"
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -146,7 +146,7 @@ export default function QuizFlow() {
               onClick={() => handleSelect(i)}
               disabled={submitting}
               style={{ animationDelay: `${0.08 + i * 0.055}s` }}
-              className="anim-opt rounded-card border border-ink/10 bg-white px-5 py-4 text-left text-base leading-relaxed shadow-sm transition duration-150 ease-out hover:-translate-y-0.5 hover:border-accent/50 hover:shadow-md active:scale-[0.98] active:border-accent active:bg-milk disabled:opacity-60"
+              className="anim-opt pressable rounded-card border border-ink/10 bg-white px-5 py-4 text-left text-base leading-relaxed shadow-sm hover:-translate-y-0.5 hover:border-accent/50 hover:shadow-md active:border-accent active:bg-milk disabled:opacity-60"
             >
               {opt.text}
             </button>
@@ -156,7 +156,7 @@ export default function QuizFlow() {
 
       {bubble && (
         <div className="pointer-events-none fixed inset-x-0 bottom-16 flex justify-center px-8">
-          <div className="anim-bubble flex max-w-sm items-start gap-2 rounded-card rounded-bl-sm bg-ink px-5 py-4 text-sm leading-relaxed text-cream shadow-xl">
+          <div className="anim-bubble flex max-w-sm items-start gap-2 rounded-card rounded-bl-sm border border-white/10 bg-ink/85 px-5 py-4 text-sm leading-relaxed text-cream shadow-xl backdrop-blur-md">
             <span aria-hidden>🐱</span>
             <span>{bubble}</span>
           </div>

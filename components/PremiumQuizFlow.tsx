@@ -110,14 +110,14 @@ export default function PremiumQuizFlow({ sessionId, paid, initialAnswers }: Pro
         <button
           onClick={() => void saveAndContinue(answers)}
           disabled={answers.length !== premiumQuestions.length || submitting}
-          className="w-full max-w-xs rounded-full bg-accent px-8 py-3 font-bold text-white active:scale-95 disabled:opacity-50"
+          className="pressable w-full max-w-xs rounded-full bg-accent px-8 py-3 font-bold text-white disabled:opacity-50"
         >
           {submitting ? "处理中..." : "重试"}
         </button>
         {showResultFallback && (
           <button
             onClick={() => router.replace(`/result/${sessionId}`)}
-            className="w-full max-w-xs rounded-full border border-ink/15 px-8 py-3 text-sm font-bold text-ink/80 active:scale-95"
+            className="pressable w-full max-w-xs rounded-full border border-ink/15 px-8 py-3 text-sm font-bold text-ink/80"
           >
             返回结果页输入兑换码
           </button>
@@ -150,7 +150,7 @@ export default function PremiumQuizFlow({ sessionId, paid, initialAnswers }: Pro
         </p>
         <button
           onClick={() => void saveAndContinue(answers)}
-          className="w-full max-w-xs rounded-full bg-accent px-8 py-3 font-bold text-white active:scale-95"
+          className="pressable w-full max-w-xs rounded-full bg-accent px-8 py-3 font-bold text-white"
         >
           继续生成报告
         </button>
@@ -176,7 +176,7 @@ export default function PremiumQuizFlow({ sessionId, paid, initialAnswers }: Pro
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-milk">
         <div
-          className="h-full rounded-full bg-accent transition-[width] duration-500 ease-out"
+          className="h-full rounded-full bg-accent transition-[width] duration-700 ease-[var(--ease-sheet)]"
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -191,7 +191,7 @@ export default function PremiumQuizFlow({ sessionId, paid, initialAnswers }: Pro
               onClick={() => handleSelect(i)}
               disabled={submitting}
               style={{ animationDelay: `${0.08 + i * 0.055}s` }}
-              className="anim-opt rounded-card border border-ink/10 bg-white px-5 py-4 text-left text-base leading-relaxed shadow-sm transition duration-150 ease-out hover:-translate-y-0.5 hover:border-accent/50 hover:shadow-md active:scale-[0.98] active:border-accent active:bg-milk disabled:opacity-60"
+              className="anim-opt pressable rounded-card border border-ink/10 bg-white px-5 py-4 text-left text-base leading-relaxed shadow-sm hover:-translate-y-0.5 hover:border-accent/50 hover:shadow-md active:border-accent active:bg-milk disabled:opacity-60"
             >
               {opt.text}
             </button>

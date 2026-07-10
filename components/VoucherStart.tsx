@@ -62,7 +62,7 @@ export default function VoucherStart({ initialCode = "" }: Props) {
           />
           <button
             onClick={startQuiz}
-            className="mt-4 w-full rounded-full bg-accent py-3.5 font-bold text-white active:scale-95"
+            className="pressable mt-4 w-full rounded-full bg-accent py-3.5 font-bold text-white"
           >
             开始生成我的报告
           </button>
