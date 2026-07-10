@@ -106,13 +106,13 @@ export async function GET(
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            marginTop: 78,
+            marginTop: 56,
           }}
         >
           <div style={{ display: "flex", fontSize: 36, color: "#8A7B68", letterSpacing: 8 }}>
             我的猫系人格
           </div>
-          <div style={{ display: "flex", marginTop: 22, fontSize: 104, letterSpacing: 8 }}>
+          <div style={{ display: "flex", marginTop: 22, fontSize: 96, letterSpacing: 8 }}>
             {persona.title}
           </div>
           <div style={{ display: "flex", marginTop: 26, width: 132, height: 6, backgroundColor: accent, borderRadius: 6 }} />
@@ -128,8 +128,8 @@ export async function GET(
           style={{
             display: "flex",
             flexDirection: "column",
-            gap: 18,
-            marginTop: 70,
+            gap: 16,
+            marginTop: 48,
           }}
         >
           {highlights.map((item) => (
@@ -140,7 +140,7 @@ export async function GET(
                 flexDirection: "column",
                 borderRadius: 26,
                 backgroundColor: "#FFFFFF",
-                padding: "24px 30px",
+                padding: "22px 30px",
                 border: "2px solid rgba(62,50,38,0.08)",
                 borderLeft: `8px solid ${accent}`,
               }}
@@ -160,7 +160,10 @@ export async function GET(
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
+            // marginTop:auto 吸底;paddingTop 保证与面板区的最小间距,flexShrink:0 防止被挤压重叠
             marginTop: "auto",
+            paddingTop: 18,
+            flexShrink: 0,
             gap: 14,
           }}
         >
