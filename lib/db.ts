@@ -52,6 +52,11 @@ export interface Db {
   savePremiumAnswers(sessionId: string, answers: number[], premiumFlags: PremiumFlags): Promise<SessionRecord | null>;
   /** 原子核销:码存在且未用 → 标记已用 + session.paid=true,单事务完成。成功返回 true。 */
   redeemCode(code: string, sessionId: string): Promise<boolean>;
+  /**
+   * 直接把会话标记为已付费(限时共享码通道用,不消耗一次性码库存)。
+   * 仅当会话存在且未付费时成功;不存在或已付费返回 false。基础设施错误抛出。
+   */
+  markSessionPaid(sessionId: string): Promise<boolean>;
   insertCodes(codes: string[], meta?: InsertCodesMeta): Promise<void>;
   /**
    * 抢占报告生成权(跨实例安全)。基础设施错误直接抛,调用方应返回 503,
@@ -119,6 +124,19 @@ function supabaseDb(url: string, serviceRoleKey: string): Db {
       });
       if (error) throw new Error(`redeemCode failed: ${error.message}`);
       return data === true;
+    },
+
+    async markSessionPaid(sessionId) {
+      // 条件更新:仅 paid=false 的行会被命中,已付费/不存在都返回 false
+      const { data, error } = await client
+        .from("sessions")
+        .update({ paid: true, user_tier: "paid" })
+        .eq("id", sessionId)
+        .eq("paid", false)
+        .select("id")
+        .maybeSingle();
+      if (error) throw new Error(`markSessionPaid failed: ${error.message}`);
+      return Boolean(data);
     },
 
     async insertCodes(codes, meta) {
@@ -265,6 +283,14 @@ function memoryDb(): Db {
       if (!entry || entry.used || entry.disabled || !session) return false;
       entry.used = true;
       entry.usedBySession = sessionId;
+      session.paid = true;
+      session.userTier = "paid";
+      return true;
+    },
+
+    async markSessionPaid(sessionId) {
+      const session = store.sessions.get(sessionId);
+      if (!session || session.paid) return false;
       session.paid = true;
       session.userTier = "paid";
       return true;
