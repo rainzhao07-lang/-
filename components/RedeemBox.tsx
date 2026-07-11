@@ -21,6 +21,7 @@ const REPORT_FEATURES = [
   "两只备选猫品种横向对比，避免只凭颜值冲动选择",
   "掉毛、空间、预算、医疗风险、新手第一个月清单",
   "根据你的答案生成更贴近本人的养猫决策建议",
+  "解锁后还有一步小定制:这份报告连语气都由你决定",
 ];
 
 function normalizeCode(value: string) {
@@ -40,13 +41,18 @@ export default function RedeemBox({
   const [code, setCode] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const feedbackUrl = process.env.NEXT_PUBLIC_FEEDBACK_URL || "#site-footer";
 
   useEffect(() => {
+    if (paid) {
+      window.localStorage.removeItem(PENDING_CODE_KEY);
+      return;
+    }
     const saved = window.localStorage.getItem(PENDING_CODE_KEY);
     if (!saved) return;
     setCode(normalizeCode(saved));
     setShowInput(true);
-  }, []);
+  }, [paid]);
 
   if (paid) {
     return (
@@ -128,7 +134,11 @@ export default function RedeemBox({
           </a>
         ) : (
           <div className="rounded-card bg-white/10 px-4 py-3 text-center text-sm leading-relaxed text-cream/70">
-            已购买的用户可直接输入兑换码；未购买请回到购买渠道获取。
+            购买入口暂时维护中——你可以先保存结果卡,稍后回来;已购买的用户直接输入兑换码即可。遇到问题请
+            <a href={feedbackUrl} className="underline underline-offset-2">
+              联系客服(页面底部)
+            </a>
+            。
           </div>
         )}
 

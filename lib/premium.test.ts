@@ -11,8 +11,10 @@ import {
 const VALID_ANSWERS = premiumQuestions.map((q) => (q.id === "qP6" ? 2 : 0));
 
 describe("付费定制题数据", () => {
-  it("共8题,每题有选项、value 和 flags", () => {
-    expect(premiumQuestions).toHaveLength(8);
+  it("共7题且不再询问收入,每题有选项、value 和 flags", () => {
+    expect(premiumQuestions).toHaveLength(7);
+    expect(premiumQuestions.some((question) => question.id === "qP1")).toBe(false);
+    expect(JSON.stringify(premiumQuestions)).not.toContain("income");
     for (const q of premiumQuestions) {
       expect(q.id).toMatch(/^qP\d+$/);
       expect(q.text.length).toBeGreaterThan(0);
@@ -26,8 +28,9 @@ describe("付费定制题数据", () => {
   });
 
   it("覆盖付费报告必需的核心标签", () => {
-    const flags = collectPremiumFlags([0, 1, 2, 3, 4, 2, 3, 4]);
-    expect(flags.income_band).toBe("private");
+    const flags = collectPremiumFlags([1, 2, 3, 4, 2, 3, 4]);
+    expect(flags.income_band).toBeUndefined();
+    expect(flags.spending_margin).toBeUndefined();
     expect(flags.monthly_cat_budget).toBe("300_600");
     expect(flags.premium_medical_buffer).toBe("strong");
     expect(flags.emotional_need).toBe("playfulness");
@@ -43,13 +46,13 @@ describe("付费定制答案校验", () => {
     expect(validatePremiumAnswers(VALID_ANSWERS)).toBe(true);
     expect(validatePremiumAnswers(VALID_ANSWERS.slice(0, 3))).toBe(false);
     expect(validatePremiumAnswers(premiumQuestions.map(() => 99))).toBe(false);
-    expect(validatePremiumAnswers("qP1=A")).toBe(false);
+    expect(validatePremiumAnswers("qP2=A")).toBe(false);
   });
 
   it("汇总标签后可转成人话描述", () => {
     const flags = collectPremiumFlags(VALID_ANSWERS);
     const lines = describePremiumFlags(flags);
-    expect(lines.join("\n")).toContain("不想透露可支配收入");
+    expect(lines.join("\n")).not.toContain("收入");
     expect(lines.join("\n")).toContain("报告语气偏实用");
   });
 });

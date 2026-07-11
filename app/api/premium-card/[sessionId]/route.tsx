@@ -29,6 +29,37 @@ function cardSerial(seed: string): string {
   return String(1000 + (h % 9000));
 }
 
+function PawMark({ color }: { color: string }) {
+  const toe = (raised: number) => ({
+    display: "flex",
+    width: 18,
+    height: 18,
+    borderRadius: 999,
+    backgroundColor: color,
+    marginBottom: raised,
+  });
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 7 }}>
+        <div style={toe(1)} />
+        <div style={toe(8)} />
+        <div style={toe(8)} />
+        <div style={toe(1)} />
+      </div>
+      <div
+        style={{
+          display: "flex",
+          width: 54,
+          height: 40,
+          borderRadius: 999,
+          backgroundColor: color,
+          marginTop: 4,
+        }}
+      />
+    </div>
+  );
+}
+
 /** GET /api/premium-card/[sessionId] — 生成付费高级分享卡 PNG。 */
 export async function GET(
   _req: Request,
@@ -115,7 +146,10 @@ export async function GET(
           <div style={{ display: "flex", marginTop: 22, fontSize: 96, letterSpacing: 8 }}>
             {persona.title}
           </div>
-          <div style={{ display: "flex", marginTop: 26, width: 132, height: 6, backgroundColor: accent, borderRadius: 6 }} />
+          <div style={{ display: "flex", marginTop: 24 }}>
+            <PawMark color={accent} />
+          </div>
+          <div style={{ display: "flex", marginTop: 22, width: 132, height: 6, backgroundColor: accent, borderRadius: 6 }} />
           <div style={{ display: "flex", marginTop: 28, fontSize: 36, color: "#8A7B68", letterSpacing: 6 }}>
             本命猫
           </div>

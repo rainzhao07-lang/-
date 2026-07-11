@@ -62,21 +62,6 @@ body::before {
   }
 }
 
-@keyframes bubble-in {
-  0% {
-    opacity: 0;
-    transform: translate3d(0, 10px, 0) scale(0.92);
-  }
-  60% {
-    opacity: 1;
-    transform: translate3d(0, -2px, 0) scale(1.02);
-  }
-  100% {
-    opacity: 1;
-    transform: none;
-  }
-}
-
 @keyframes reveal-pop {
   0% {
     opacity: 0;
@@ -170,11 +155,6 @@ body::before {
 
 .anim-fade-up-delay-3 {
   animation: fade-up 0.5s var(--ease-soft) 0.36s backwards;
-  will-change: transform, opacity;
-}
-
-.anim-bubble {
-  animation: bubble-in 0.42s var(--ease-spring) backwards;
   will-change: transform, opacity;
 }
 

@@ -70,6 +70,9 @@ export default async function ResultPage({
         >
           保存分享卡
         </a>
+        <p className="max-w-xs text-center text-xs leading-relaxed text-soft">
+          把卡片发给你的闺蜜——看看你们是谁照顾谁的铲屎官组合。
+        </p>
         <p className="text-xs text-soft">手机端可长按上方卡片保存</p>
       </section>
 

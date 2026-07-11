@@ -11,7 +11,8 @@
     "beginnerFit": "mid",
     "smallSpaceFit": "mid",
     "availability": "high",
-    "costDetail": { "food": [180, 350], "litter": [50, 100], "other": [80, 200] }
+    "costDetail": { "food": [180, 350], "litter": [50, 100], "other": [80, 200] },
+    "starterKit": ["长毛排梳", "化毛膏", "带你气味的旧衣物(适应期安抚)"]
   },
   "silver_shaded": {
     "name": "银渐层",
@@ -25,7 +26,8 @@
     "beginnerFit": "high",
     "smallSpaceFit": "high",
     "availability": "high",
-    "costDetail": { "food": [150, 300], "litter": [40, 90], "other": [60, 160] }
+    "costDetail": { "food": [150, 300], "litter": [40, 90], "other": [60, 160] },
+    "starterKit": ["猫薄荷玩具一件"]
   },
   "domestic_cow": {
     "name": "田园奶牛猫",
@@ -39,7 +41,8 @@
     "beginnerFit": "high",
     "smallSpaceFit": "high",
     "availability": "high",
-    "costDetail": { "food": [120, 260], "litter": [35, 80], "other": [40, 120] }
+    "costDetail": { "food": [120, 260], "litter": [35, 80], "other": [40, 120] },
+    "starterKit": ["立式爬架或轨道球", "备用逗猫棒"]
   },
   "british_shorthair": {
     "name": "英国短毛猫",
@@ -53,7 +56,23 @@
     "beginnerFit": "high",
     "smallSpaceFit": "high",
     "availability": "high",
-    "costDetail": { "food": [150, 320], "litter": [40, 90], "other": [60, 160] }
+    "costDetail": { "food": [150, 320], "litter": [40, 90], "other": [60, 160] },
+    "starterKit": ["猫薄荷玩具一件"]
+  },
+  "british_blue": {
+    "name": "英短蓝猫",
+    "shedding": "mid",
+    "activity": "low",
+    "clinginess": "mid",
+    "grooming": "low",
+    "monthlyCost": "mid",
+    "vetRisk": "mid",
+    "healthRisks": ["容易发胖，需要控制饮食和增加活动", "部分个体需关注心脏和关节压力"],
+    "beginnerFit": "high",
+    "smallSpaceFit": "high",
+    "availability": "high",
+    "costDetail": { "food": [150, 320], "litter": [40, 90], "other": [60, 160] },
+    "starterKit": ["猫薄荷玩具一件"]
   },
   "american_shorthair": {
     "name": "美国短毛猫",
@@ -67,7 +86,8 @@
     "beginnerFit": "high",
     "smallSpaceFit": "high",
     "availability": "high",
-    "costDetail": { "food": [140, 300], "litter": [40, 90], "other": [50, 150] }
+    "costDetail": { "food": [140, 300], "litter": [40, 90], "other": [50, 150] },
+    "starterKit": ["猫薄荷玩具一件"]
   },
   "domestic_tabby": {
     "name": "田园狸花猫",
@@ -81,7 +101,8 @@
     "beginnerFit": "high",
     "smallSpaceFit": "high",
     "availability": "high",
-    "costDetail": { "food": [120, 260], "litter": [35, 80], "other": [40, 120] }
+    "costDetail": { "food": [120, 260], "litter": [35, 80], "other": [40, 120] },
+    "starterKit": ["立式爬架或轨道球", "备用逗猫棒"]
   },
   "siamese": {
     "name": "暹罗猫",
@@ -95,7 +116,8 @@
     "beginnerFit": "mid",
     "smallSpaceFit": "mid",
     "availability": "high",
-    "costDetail": { "food": [150, 300], "litter": [40, 90], "other": [60, 160] }
+    "costDetail": { "food": [150, 300], "litter": [40, 90], "other": [60, 160] },
+    "starterKit": ["立式爬架或轨道球", "备用逗猫棒", "带你气味的旧衣物(适应期安抚)", "保暖猫窝"]
   },
   "oriental_shorthair": {
     "name": "东方短毛猫",
@@ -109,7 +131,8 @@
     "beginnerFit": "mid",
     "smallSpaceFit": "mid",
     "availability": "mid",
-    "costDetail": { "food": [160, 320], "litter": [40, 90], "other": [70, 180] }
+    "costDetail": { "food": [160, 320], "litter": [40, 90], "other": [70, 180] },
+    "starterKit": ["立式爬架或轨道球", "备用逗猫棒", "带你气味的旧衣物(适应期安抚)", "保暖猫窝"]
   },
   "domestic_black": {
     "name": "田园玄猫",
@@ -123,7 +146,8 @@
     "beginnerFit": "high",
     "smallSpaceFit": "high",
     "availability": "high",
-    "costDetail": { "food": [120, 260], "litter": [35, 80], "other": [40, 120] }
+    "costDetail": { "food": [120, 260], "litter": [35, 80], "other": [40, 120] },
+    "starterKit": ["猫薄荷玩具一件"]
   },
   "maine_coon": {
     "name": "缅因猫",
@@ -137,7 +161,8 @@
     "beginnerFit": "low",
     "smallSpaceFit": "low",
     "availability": "high",
-    "costDetail": { "food": [300, 600], "litter": [70, 140], "other": [150, 350] }
+    "costDetail": { "food": [300, 600], "litter": [70, 140], "other": [150, 350] },
+    "starterKit": ["长毛排梳", "化毛膏", "加大号猫砂盆", "大号航空箱"]
   },
   "norwegian_forest": {
     "name": "挪威森林猫",
@@ -151,7 +176,8 @@
     "beginnerFit": "mid",
     "smallSpaceFit": "mid",
     "availability": "mid",
-    "costDetail": { "food": [220, 450], "litter": [60, 120], "other": [100, 260] }
+    "costDetail": { "food": [220, 450], "litter": [60, 120], "other": [100, 260] },
+    "starterKit": ["长毛排梳", "化毛膏", "加大号猫砂盆", "大号航空箱"]
   },
   "domestic_orange": {
     "name": "田园橘猫",
@@ -165,7 +191,8 @@
     "beginnerFit": "high",
     "smallSpaceFit": "high",
     "availability": "high",
-    "costDetail": { "food": [120, 260], "litter": [35, 80], "other": [40, 120] }
+    "costDetail": { "food": [120, 260], "litter": [35, 80], "other": [40, 120] },
+    "starterKit": ["猫薄荷玩具一件"]
   },
   "chinchilla": {
     "name": "金吉拉",
@@ -179,7 +206,8 @@
     "beginnerFit": "mid",
     "smallSpaceFit": "high",
     "availability": "mid",
-    "costDetail": { "food": [180, 380], "litter": [50, 100], "other": [100, 260] }
+    "costDetail": { "food": [180, 380], "litter": [50, 100], "other": [100, 260] },
+    "starterKit": ["长毛排梳", "化毛膏", "眼周清洁湿巾", "浅口食盆"]
   },
   "persian": {
     "name": "波斯猫",
@@ -193,7 +221,8 @@
     "beginnerFit": "low",
     "smallSpaceFit": "high",
     "availability": "high",
-    "costDetail": { "food": [180, 380], "litter": [50, 100], "other": [120, 300] }
+    "costDetail": { "food": [180, 380], "litter": [50, 100], "other": [120, 300] },
+    "starterKit": ["长毛排梳", "化毛膏", "眼周清洁湿巾", "浅口食盆"]
   },
   "domestic_calico": {
     "name": "田园三花猫",
@@ -207,7 +236,8 @@
     "beginnerFit": "high",
     "smallSpaceFit": "high",
     "availability": "high",
-    "costDetail": { "food": [120, 260], "litter": [35, 80], "other": [40, 120] }
+    "costDetail": { "food": [120, 260], "litter": [35, 80], "other": [40, 120] },
+    "starterKit": ["猫薄荷玩具一件"]
   },
   "russian_blue": {
     "name": "俄罗斯蓝猫",
@@ -221,7 +251,8 @@
     "beginnerFit": "high",
     "smallSpaceFit": "high",
     "availability": "mid",
-    "costDetail": { "food": [150, 320], "litter": [40, 90], "other": [60, 160] }
+    "costDetail": { "food": [150, 320], "litter": [40, 90], "other": [60, 160] },
+    "starterKit": ["猫薄荷玩具一件"]
   },
   "chartreux": {
     "name": "卡尔特猫",
@@ -235,7 +266,8 @@
     "beginnerFit": "mid",
     "smallSpaceFit": "high",
     "availability": "low",
-    "costDetail": { "food": [160, 330], "litter": [40, 90], "other": [70, 180] }
+    "costDetail": { "food": [160, 330], "litter": [40, 90], "other": [70, 180] },
+    "starterKit": ["猫薄荷玩具一件"]
   },
   "domestic_blue_white": {
     "name": "田园蓝白猫",
@@ -249,7 +281,8 @@
     "beginnerFit": "high",
     "smallSpaceFit": "high",
     "availability": "high",
-    "costDetail": { "food": [120, 260], "litter": [35, 80], "other": [40, 120] }
+    "costDetail": { "food": [120, 260], "litter": [35, 80], "other": [40, 120] },
+    "starterKit": ["猫薄荷玩具一件"]
   },
   "abyssinian": {
     "name": "阿比西尼亚猫",
@@ -263,7 +296,8 @@
     "beginnerFit": "mid",
     "smallSpaceFit": "mid",
     "availability": "mid",
-    "costDetail": { "food": [160, 330], "litter": [40, 90], "other": [80, 200] }
+    "costDetail": { "food": [160, 330], "litter": [40, 90], "other": [80, 200] },
+    "starterKit": ["立式爬架或轨道球", "备用逗猫棒"]
   },
   "bengal": {
     "name": "孟加拉豹猫",
@@ -277,7 +311,8 @@
     "beginnerFit": "low",
     "smallSpaceFit": "low",
     "availability": "mid",
-    "costDetail": { "food": [220, 450], "litter": [50, 110], "other": [100, 260] }
+    "costDetail": { "food": [220, 450], "litter": [50, 110], "other": [100, 260] },
+    "starterKit": ["立式爬架或轨道球", "备用逗猫棒"]
   },
   "exotic_shorthair": {
     "name": "异国短毛猫",
@@ -291,7 +326,8 @@
     "beginnerFit": "mid",
     "smallSpaceFit": "high",
     "availability": "high",
-    "costDetail": { "food": [170, 350], "litter": [45, 95], "other": [100, 260] }
+    "costDetail": { "food": [170, 350], "litter": [45, 95], "other": [100, 260] },
+    "starterKit": ["眼周清洁湿巾", "浅口食盆", "带你气味的旧衣物(适应期安抚)"]
   },
   "british_longhair": {
     "name": "英国长毛猫",
@@ -305,7 +341,8 @@
     "beginnerFit": "mid",
     "smallSpaceFit": "high",
     "availability": "high",
-    "costDetail": { "food": [160, 330], "litter": [45, 95], "other": [80, 220] }
+    "costDetail": { "food": [160, 330], "litter": [45, 95], "other": [80, 220] },
+    "starterKit": ["长毛排梳", "化毛膏"]
   },
   "domestic_white": {
     "name": "田园白猫",
@@ -319,6 +356,7 @@
     "beginnerFit": "high",
     "smallSpaceFit": "high",
     "availability": "high",
-    "costDetail": { "food": [120, 260], "litter": [35, 80], "other": [40, 120] }
+    "costDetail": { "food": [120, 260], "litter": [35, 80], "other": [40, 120] },
+    "starterKit": ["猫薄荷玩具一件"]
   }
 }

@@ -2,19 +2,6 @@ import { premiumQuestions as defaultPremiumQuestions } from "./content";
 import type { PremiumFlags, PremiumQuestion } from "./types";
 
 export const PREMIUM_FLAG_LABELS: Record<string, Record<string, string>> = {
-  income_band: {
-    private: "不想透露可支配收入,需要用保守方式判断预算压力",
-    under_3000: "每月可自由安排的钱在3000元以内,支出需要认真规划",
-    "3000_6000": "每月可自由安排的钱约3000-6000元,适合有计划地养猫",
-    "6000_10000": "每月可自由安排的钱约6000-10000元,预算余地较稳定",
-    over_10000: "每月可自由安排的钱在10000元以上,预算不是最大压力",
-  },
-  spending_margin: {
-    tight: "日常支出余地偏紧",
-    planned: "适合按计划安排长期支出",
-    comfortable: "有较稳定的生活投入空间",
-    loose: "长期预算弹性较高",
-  },
   monthly_cat_budget: {
     under_300: "可接受月均养猫预算300元以内",
     "300_600": "可接受月均养猫预算300-600元",

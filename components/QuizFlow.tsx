@@ -1,23 +1,23 @@
 "use client";
 
-// 答题流程：单题单屏、点选后立即切题，微反馈只作为轻提示，不阻塞继续作答。
+// 答题流程：单题单屏；第4/8/12题后插入独立微反馈过场。
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { questions } from "@/lib/content";
 import { topPersonaForPartial } from "@/lib/scoring";
 
 const MICRO_FEEDBACK_AFTER = new Set([3, 7, 11]); // 第4题、第8题、第12题后显示
-const BUBBLE_MS = 1100;
+const FEEDBACK_MS = 1800;
 const PENDING_CODE_KEY = "benmingmao.pendingCode";
 
 export default function QuizFlow() {
   const router = useRouter();
   const [answers, setAnswers] = useState<number[]>([]);
-  const [bubble, setBubble] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const lockedRef = useRef(false);
-  const bubbleTimerRef = useRef<number | null>(null);
+  const feedbackTimerRef = useRef<number | null>(null);
 
   const idx = Math.min(answers.length, questions.length - 1);
   const question = questions[idx];
@@ -25,8 +25,8 @@ export default function QuizFlow() {
 
   useEffect(() => {
     return () => {
-      if (bubbleTimerRef.current !== null) {
-        window.clearTimeout(bubbleTimerRef.current);
+      if (feedbackTimerRef.current !== null) {
+        window.clearTimeout(feedbackTimerRef.current);
       }
     };
   }, []);
@@ -37,16 +37,18 @@ export default function QuizFlow() {
     });
   }
 
-  function showBubble(message: string) {
-    if (bubbleTimerRef.current !== null) {
-      window.clearTimeout(bubbleTimerRef.current);
+  function finishFeedback() {
+    if (feedbackTimerRef.current !== null) {
+      window.clearTimeout(feedbackTimerRef.current);
+      feedbackTimerRef.current = null;
     }
+    setFeedback(null);
+    unlockOnNextFrame();
+  }
 
-    setBubble(message);
-    bubbleTimerRef.current = window.setTimeout(() => {
-      setBubble(null);
-      bubbleTimerRef.current = null;
-    }, BUBBLE_MS);
+  function showFeedback(message: string) {
+    setFeedback(message);
+    feedbackTimerRef.current = window.setTimeout(finishFeedback, FEEDBACK_MS);
   }
 
   async function submit(finalAnswers: number[]) {
@@ -61,7 +63,28 @@ export default function QuizFlow() {
       if (!res.ok) throw new Error(String(res.status));
       const data = (await res.json()) as { sessionId: string };
       const pendingCode = window.localStorage.getItem(PENDING_CODE_KEY);
-      router.replace(pendingCode ? `/premium-quiz/${data.sessionId}` : `/result/${data.sessionId}`);
+      if (!pendingCode) {
+        router.replace(`/result/${data.sessionId}`);
+        return;
+      }
+
+      try {
+        const redeemRes = await fetch("/api/redeem", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ code: pendingCode, sessionId: data.sessionId }),
+        });
+        const redeemData = (await redeemRes.json().catch(() => null)) as { ok?: boolean } | null;
+        if (redeemRes.ok && redeemData?.ok) {
+          window.localStorage.removeItem(PENDING_CODE_KEY);
+          router.replace(`/premium-quiz/${data.sessionId}`);
+          return;
+        }
+      } catch {
+        // 会话已经创建，兑换异常时回结果页继续，不重复创建会话。
+      }
+
+      router.replace(`/result/${data.sessionId}`);
     } catch {
       setSubmitting(false);
       lockedRef.current = false;
@@ -79,7 +102,8 @@ export default function QuizFlow() {
     if (MICRO_FEEDBACK_AFTER.has(answers.length)) {
       const persona = topPersonaForPartial(next);
       const pool = persona.microFeedbackPool;
-      showBubble(pool[Math.floor(Math.random() * pool.length)]);
+      showFeedback(pool[Math.floor(Math.random() * pool.length)]);
+      return;
     }
 
     if (next.length === questions.length) {
@@ -121,6 +145,26 @@ export default function QuizFlow() {
     );
   }
 
+  if (feedback) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-cream px-8">
+        <button
+          type="button"
+          onClick={finishFeedback}
+          aria-label={feedback}
+          className="flex min-h-screen w-full max-w-md flex-col items-center justify-center gap-8 text-center"
+        >
+          <span className="cat-glow anim-float text-7xl" aria-hidden>
+            🐱
+          </span>
+          <span className="anim-reveal text-lg font-medium leading-relaxed text-ink/85">
+            {feedback}
+          </span>
+        </button>
+      </main>
+    );
+  }
+
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col px-6 py-8">
       <div className="mb-2 flex items-center justify-between text-xs text-soft">
@@ -153,15 +197,6 @@ export default function QuizFlow() {
           ))}
         </div>
       </section>
-
-      {bubble && (
-        <div className="pointer-events-none fixed inset-x-0 bottom-16 flex justify-center px-8">
-          <div className="anim-bubble flex max-w-sm items-start gap-2 rounded-card rounded-bl-sm border border-white/10 bg-ink/85 px-5 py-4 text-sm leading-relaxed text-cream shadow-xl backdrop-blur-md">
-            <span aria-hidden>🐱</span>
-            <span>{bubble}</span>
-          </div>
-        </div>
-      )}
     </main>
   );
 }

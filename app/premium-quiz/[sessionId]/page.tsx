@@ -16,11 +16,11 @@ export default async function PremiumQuizPage({
   const session = await db.getSession(sessionId);
   if (!session) redirect("/");
   if (canGeneratePaidReport(session)) redirect(`/report/${sessionId}`);
+  if (!session.paid) redirect(`/result/${sessionId}`);
 
   return (
     <PremiumQuizFlow
       sessionId={sessionId}
-      paid={session.paid}
       initialAnswers={session.premiumAnswers}
     />
   );

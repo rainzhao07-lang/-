@@ -11,7 +11,8 @@
     "font:subset": "node scripts/subset-font.mjs",
     "codes:generate": "node scripts/generate-redeem-codes.mjs",
     "distribution:check": "node scripts/distribution-check.mjs",
-    "check": "npm run typecheck && npm run test && npm run distribution:check && npm run build"
+    "report:similarity": "vite-node -c vitest.config.ts scripts/similarity-check.mjs",
+    "check": "npm run typecheck && npm run test && npm run distribution:check && npm run report:similarity && npm run build"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

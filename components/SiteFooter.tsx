@@ -7,7 +7,7 @@ import Link from "next/link";
 export default function SiteFooter() {
   const feedbackUrl = process.env.NEXT_PUBLIC_FEEDBACK_URL;
   return (
-    <footer className="mt-10 flex flex-col items-center gap-3 pb-6 text-center text-xs leading-relaxed text-soft/80">
+    <footer id="site-footer" className="mt-10 flex flex-col items-center gap-3 pb-6 text-center text-xs leading-relaxed text-soft/80">
       <p>我们倡导领养代替购买。报告中的性格特质，田园猫中同样存在。</p>
       <p>本测试与报告均为参考建议，不构成任何专业意见；每只猫都是独立的个体。</p>
       <nav className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-soft">

@@ -80,6 +80,19 @@ const CONFLICT_LABELS: Record<BreedConflictType, string> = {
   noise: "夜间安静需求",
 };
 
+const CONFLICT_PRIORITY: BreedConflictType[] = [
+  "consent",
+  "medical",
+  "budget",
+  "space",
+  "shedding",
+  "allergy",
+  "beginner",
+  "availability",
+  "time",
+  "noise",
+];
+
 /**
  * 检测人格猫与现实条件的冲突。
  * 原理:人格仍负责"情绪命中",硬条件负责提醒现实成本,避免把浪漫结果误包装成无条件推荐。
@@ -121,12 +134,15 @@ export function detectBreedConflict(
   if (hardFlags.trouble === "night_noise" && primary.activity === "high") types.push("noise");
   if (primary.availability === "low") types.push("availability");
 
-  const uniqueTypes = [...new Set(types)];
+  const allTypes = [...new Set(types)].sort(
+    (left, right) => CONFLICT_PRIORITY.indexOf(left) - CONFLICT_PRIORITY.indexOf(right),
+  );
   const alternative = persona.altBreeds.find((candidate) => {
     const profile = breedByName(candidate.name, source);
-    return profile ? !hasSameConflict(profile, hardFlags, uniqueTypes) && profile.availability !== "low" : false;
+    return profile ? !hasSameConflict(profile, hardFlags, allTypes) && profile.availability !== "low" : false;
   });
 
+  const uniqueTypes = allTypes.slice(0, 2);
   const typeLabels = uniqueTypes.map((type) => CONFLICT_LABELS[type]);
   const softAlternative = alternative?.name;
   const message = buildConflictMessage(persona.primaryBreed.name, typeLabels, softAlternative, uniqueTypes);
@@ -166,9 +182,10 @@ function buildConflictMessage(
 ): string | undefined {
   if (types.length === 0) return undefined;
   if (types.includes("consent") && !softAlternative) {
-    return `你的人格猫是${primaryBreed},不过看你的${typeLabels.join("、")},现实里要先把“能不能养”的条件定下来。为什么?完整报告里聊。`;
+    return "你的人格猫是" + primaryBreed + "。不过在把它带回家之前，有一件事比选品种更优先——完整报告里我们先聊聊这个。";
   }
-  return `你的人格猫是${primaryBreed},不过看你的${typeLabels.join("、")},现实里更稳的搭档也许是${softAlternative ?? "更低维护的猫"}。为什么?完整报告里聊。`;
+  const joined = typeLabels.length > 1 ? `${typeLabels[0]}和${typeLabels[1]}` : typeLabels[0];
+  return `你的人格猫是${primaryBreed}——不过看你的${joined}，现实里更稳的搭档也许是${softAlternative ?? "更低维护的猫"}。为什么？完整报告里聊。`;
 }
 
 /** 答题中途的当前领先 persona(微反馈用) */

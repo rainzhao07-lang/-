@@ -21,6 +21,7 @@ export type BreedProfile = {
     litter: [number, number];
     other: [number, number];
   };
+  starterKit: string[];
 };
 
 export type Persona = {
@@ -54,7 +55,6 @@ export type Question = {
 export type HardFlags = Record<string, string>;
 
 export type PremiumQuestionCategory =
-  | "income"
   | "budget"
   | "housing"
   | "emotion"

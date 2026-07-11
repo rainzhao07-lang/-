@@ -4,22 +4,18 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { premiumQuestions } from "@/lib/content";
 
-const PENDING_CODE_KEY = "benmingmao.pendingCode";
-
 type Props = {
   sessionId: string;
-  paid: boolean;
   initialAnswers?: number[] | null;
 };
 
-export default function PremiumQuizFlow({ sessionId, paid, initialAnswers }: Props) {
+export default function PremiumQuizFlow({ sessionId, initialAnswers }: Props) {
   const router = useRouter();
   const [answers, setAnswers] = useState<number[]>(
     Array.isArray(initialAnswers) ? initialAnswers.slice(0, premiumQuestions.length) : [],
   );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showResultFallback, setShowResultFallback] = useState(false);
   const lockedRef = useRef(false);
 
   const idx = Math.min(answers.length, premiumQuestions.length - 1);
@@ -35,7 +31,6 @@ export default function PremiumQuizFlow({ sessionId, paid, initialAnswers }: Pro
   async function saveAndContinue(finalAnswers: number[]) {
     setSubmitting(true);
     setError(null);
-    setShowResultFallback(false);
 
     try {
       const saveRes = await fetch("/api/session/premium", {
@@ -48,35 +43,6 @@ export default function PremiumQuizFlow({ sessionId, paid, initialAnswers }: Pro
         throw new Error(saveData?.error ?? "定制题保存失败");
       }
 
-      if (paid) {
-        router.replace(`/report/${sessionId}`);
-        return;
-      }
-
-      const code = window.localStorage.getItem(PENDING_CODE_KEY);
-      if (!code) {
-        setError("定制问题已保存。请返回结果页输入兑换码后继续生成报告。");
-        setShowResultFallback(true);
-        setSubmitting(false);
-        lockedRef.current = false;
-        return;
-      }
-
-      const redeemRes = await fetch("/api/redeem", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ code, sessionId }),
-      });
-      const redeemData = (await redeemRes.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
-      if (!redeemRes.ok || !redeemData?.ok) {
-        setError(redeemData?.error ?? "兑换码无效或已使用，请返回结果页重新输入。");
-        setShowResultFallback(true);
-        setSubmitting(false);
-        lockedRef.current = false;
-        return;
-      }
-
-      window.localStorage.removeItem(PENDING_CODE_KEY);
       router.replace(`/report/${sessionId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "定制题保存失败，请检查网络后重试");
@@ -114,14 +80,6 @@ export default function PremiumQuizFlow({ sessionId, paid, initialAnswers }: Pro
         >
           {submitting ? "处理中..." : "重试"}
         </button>
-        {showResultFallback && (
-          <button
-            onClick={() => router.replace(`/result/${sessionId}`)}
-            className="pressable w-full max-w-xs rounded-full border border-ink/15 px-8 py-3 text-sm font-bold text-ink/80"
-          >
-            返回结果页输入兑换码
-          </button>
-        )}
       </main>
     );
   }
@@ -133,7 +91,7 @@ export default function PremiumQuizFlow({ sessionId, paid, initialAnswers }: Pro
           🐈
         </div>
         <p className="text-lg font-medium">正在保存你的定制信息...</p>
-        <p className="text-sm text-soft">完成后会自动解锁并生成深度报告</p>
+        <p className="text-sm text-soft">完成后会自动生成深度报告</p>
       </main>
     );
   }
@@ -145,9 +103,7 @@ export default function PremiumQuizFlow({ sessionId, paid, initialAnswers }: Pro
           🐱
         </div>
         <h1 className="text-2xl font-bold">定制问题已完成</h1>
-        <p className="text-sm leading-relaxed text-soft">
-          你的深度报告信息已经准备好，继续后会校验兑换码并生成报告。
-        </p>
+        <p className="text-sm leading-relaxed text-soft">你的深度报告信息已经准备好。</p>
         <button
           onClick={() => void saveAndContinue(answers)}
           className="pressable w-full max-w-xs rounded-full bg-accent px-8 py-3 font-bold text-white"

@@ -33,7 +33,7 @@ npm run check   # typecheck + 单测 + build,提交前必须全绿
 |---|---|
 | `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | Supabase 项目设置里获取。首次需在 SQL Editor 执行 `supabase/schema.sql` 建表 |
 | `ADMIN_SECRET` | 生成兑换码接口的密钥,自定义强随机串 |
-| `NEXT_PUBLIC_PAY_URL` | **换收款链接只改这一个值**:面包多/发卡网商品页地址 |
+| `NEXT_PUBLIC_PAY_URL` | **生产必填。换收款链接只改这一个值**:面包多/发卡网商品页地址；缺失时构建会输出上线阻塞警告 |
 | `NEXT_PUBLIC_SITE_URL` | 正式域名,用于分享卡短链与 og 分享 |
 
 ## 运营者手册

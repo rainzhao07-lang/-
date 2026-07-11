@@ -1,3 +1,5 @@
+import reportVariantsJson from "@/content/reportVariants.json";
+import { breedByName } from "./content";
 import { premiumFlagLabel } from "./premium";
 import type { BreedConflict, BreedProfile, HardFlags, Persona, PremiumFlags } from "./types";
 
@@ -12,131 +14,129 @@ export type LocalReportInput = {
 };
 
 type StyleCopy = {
-  lead: string;
   judgement: string;
   closing: string;
 };
 
-const HARD_FLAG_LABELS: Record<string, Record<string, string>> = {
-  schedule: {
-    regular: "作息规律",
-    normal: "作息略晚但基本稳定",
-    night: "夜间精力更活跃",
-    irregular: "作息不固定",
-    busy: "日常比较忙",
-  },
-  space: {
-    small: "空间偏紧",
-    medium: "小户型或中等空间",
-    large: "居住空间宽裕",
-  },
-  budget: {
-    low: "基础预算偏谨慎",
-    mid: "预算有计划",
-    high: "预算弹性较高",
-  },
-  shedding: {
-    low: "对掉毛很敏感",
-    mid: "能接受少量掉毛",
-    high: "对掉毛不太介意",
-  },
-  care_time: {
-    low: "稳定陪伴时间偏少",
-    mid: "能保持轻量互动",
-    high: "愿意主动陪玩",
-  },
-  consent: {
-    clear: "居住许可明确",
-    discussed: "已基本沟通过",
-    negotiating: "居住许可还在沟通",
-    blocked: "居住许可存在阻力",
-  },
-  medical_buffer: {
-    high: "突发医疗承受力较强",
-    mid: "能安排基础医疗支出",
-    tight: "医疗支出需要谨慎规划",
-    low: "突发医疗压力较大",
-  },
+type CatName = { name: string; reason: string };
+type ReportVariants = {
+  opening: Record<string, string[]>;
+  whyBreed: { default: string[] };
+  realityIntro: { default: string[] };
+  emotionIntro: { default: string[] };
+  riskIntro: { default: string[] };
+  altIntro: { default: string[] };
+  checklistIntro: { default: string[] };
+  weave: Record<string, string[]>;
+  comparisonClosing: { default: string[] };
+  closingVerdict: Record<string, string[]>;
+  catNames: Record<string, CatName[][]>;
 };
+
+const REPORT_VARIANTS = reportVariantsJson as ReportVariants;
 
 const STYLE_COPY: Record<string, StyleCopy> = {
   gentle: {
-    lead: "这份报告会尽量温柔地把你的期待和现实条件放在一起看。",
     judgement: "更适合用循序渐进的方式进入养猫,先把让你安心的条件准备好。",
     closing: "你不用急着证明自己已经准备完美,把关键条件一项项补齐就够了。",
   },
   direct: {
-    lead: "这份报告会直接给出判断:哪里适合,哪里需要先补课。",
     judgement: "先看预算、许可和医疗备用金,这些比一时喜欢更能决定长期体验。",
     closing: "如果这些条件没有确认,先缓一缓比冲动开始更负责。",
   },
   practical: {
-    lead: "这份报告会尽量把结论落到清单、预算和执行步骤上。",
     judgement: "你需要的是可执行的接猫路径:先确认限制,再准备用品,最后选择猫。",
     closing: "按清单推进,比靠感觉判断更稳定。",
   },
   emotional: {
-    lead: "这份报告会更认真地照顾你为什么想靠近一只猫。",
     judgement: "你要的不只是可爱,而是一个能让生活变柔软、变稳定的陪伴关系。",
     closing: "当现实条件被照顾好,这份喜欢才更容易变成长期的安心。",
   },
 };
 
 export function localReportModelName(): string {
-  return "local-rules-v1";
+  return "local-rules-v1.4";
 }
 
 export function buildLocalReport(input: LocalReportInput): string {
-  const style = STYLE_COPY[input.premiumFlags.report_style] ?? STYLE_COPY.gentle;
+  const styleKey = input.premiumFlags.report_style ?? "gentle";
+  const style = STYLE_COPY[styleKey] ?? STYLE_COPY.gentle;
   const breed = input.breedFacts;
   const premium = input.premiumFlags;
   const hard = input.hardFlags;
   const breedName = input.persona.primaryBreed.name;
+  const wovenLines = wovenAnswerLines(input, breedName);
   const costLine = breed
     ? `参考月花费:主粮${formatRange(breed.costDetail.food)}元,猫砂${formatRange(breed.costDetail.litter)}元,其他护理/玩具/零食${formatRange(breed.costDetail.other)}元。`
     : "参考月花费需要按当地价格保守估算。";
   const healthLine = breed
     ? `护理与健康重点:${breed.healthRisks.join("、")}。`
     : "护理与健康重点建议以正规医院体检结果为准。";
-  const clues = compactClues(input.answersSummary);
   const conflictText = buildConflictText(input.conflict, breedName);
   const risks = buildRisks(input);
-  const names = catNamesFor(premium.emotional_need);
+  const names = catNamesForSession(input.sessionId, premium.emotional_need);
+  const comparison = buildBreedComparison(input);
+  const closingVerdict = pickVariant(
+    REPORT_VARIANTS.closingVerdict[input.persona.id] ?? [],
+    input.sessionId,
+    "closingVerdict",
+  );
+  const starterKit = breed?.starterKit?.length ? breed.starterKit.join("、") : "猫薄荷玩具一件";
+  const availabilityLine = breed?.availability === "mid"
+    ? "说句实在的:这只在国内不算常见,如果缘分一时难寻,下面的备选同样契合,不必执着。"
+    : "";
 
-  return [
+  const consentLine = consentAdvice(premium, hard);
+  const report = [
     "## 你的猫系人格",
-    `${style.lead} 你的测试结果是「${input.persona.title}」,关键词是「${input.persona.subtitle}」。${input.persona.verdict}`,
+    pickVariant(REPORT_VARIANTS.opening[styleKey] ?? REPORT_VARIANTS.opening.gentle, input.sessionId, "opening"),
+    `你的测试结果是「${input.persona.title}」,关键词是「${input.persona.subtitle}」。${input.persona.verdict}`,
     input.persona.signatureParagraph,
-    `从基础题看,你身上的线索是:${hardSummary(hard)}。${clues ? `其中最有参考价值的几条答案是:${clues}。` : ""}`,
+    wovenLines[0] ?? "",
     `这些不是给你贴标签,而是说明你在亲密关系里既需要温度,也需要边界和节奏——一只合适的猫,恰好懂得怎么和这样的你相处。`,
     "",
     `## 为什么是${breedName}`,
-    `${breedName}成为你的本命猫,不是因为它只符合一个单点偏好,而是它和你的生活节奏、互动期待、承受边界更容易形成稳定匹配。${input.persona.primaryBreed.reason}`,
+    fillTemplate(pickVariant(REPORT_VARIANTS.whyBreed.default, input.sessionId, "whyBreed"), { breed: breedName }),
+    input.persona.primaryBreed.reason,
+    wovenLines[1] ?? "",
     `${costLine}${healthLine} 如果你把它当作长期共同生活的成员,比起只看颜值,更应该提前理解它的护理成本、活动需求和性格波动。`,
+    availabilityLine,
     "",
     "## 现实适配度",
+    pickVariant(REPORT_VARIANTS.realityIntro.default, input.sessionId, "realityIntro"),
     `预算:${budgetAdvice(premium, hard, breed)} ${premiumLabel("monthly_cat_budget", premium.monthly_cat_budget)}`,
-    `空间:${housingAdvice(premium, hard, breed)}`,
+    `空间:${housingAdvice(hard, breed)}`,
+    ...(consentLine ? [`居住许可:${consentLine}`] : []),
     `作息:${scheduleAdvice(hard, breed)}`,
     `医疗承受力:${medicalAdvice(premium, hard, breed)}`,
+    wovenLines[2] ?? "",
     conflictText,
     "",
     "## 情绪需求",
+    pickVariant(REPORT_VARIANTS.emotionIntro.default, input.sessionId, "emotionIntro"),
     emotionParagraph(premium, style),
     decisionParagraph(premium),
     "",
     "## 三个养猫风险和解决方案",
+    pickVariant(REPORT_VARIANTS.riskIntro.default, input.sessionId, "riskIntro"),
     `1. ${risks[0]}`,
     `2. ${risks[1]}`,
     `3. ${risks[2]}`,
     "",
     "## 备选与行动清单",
-    `${input.persona.altBreeds[0]?.name ?? "田园猫"}:${input.persona.altBreeds[0]?.reason ?? "性格差异大,适合线下慢慢匹配"}。${input.persona.altBreeds[1]?.name ?? "短毛猫"}:${input.persona.altBreeds[1]?.reason ?? "护理压力相对可控"}。这两只不是退而求其次,而是给你保留现实弹性。`,
+    pickVariant(REPORT_VARIANTS.altIntro.default, input.sessionId, "altIntro"),
+    `${input.persona.altBreeds[0]?.name ?? "田园猫"}:${withoutTerminalPeriod(input.persona.altBreeds[0]?.reason ?? "性格差异大,适合线下慢慢匹配")}。${input.persona.altBreeds[1]?.name ?? "短毛猫"}:${withoutTerminalPeriod(input.persona.altBreeds[1]?.reason ?? "护理压力相对可控")}。`,
+    ...comparison,
+    pickVariant(REPORT_VARIANTS.checklistIntro.default, input.sessionId, "checklistIntro"),
     "第一个月准备清单:航空箱、封闭或半封闭猫砂盆、低粉尘猫砂、主粮试吃装、稳定饮水点、抓板、逗猫棒、基础体检预算、驱虫安排、常去医院名单。",
+    `为${breedName}多准备:${starterKit}。`,
     `猫名彩蛋:${names.map((item) => `${item.name}(${item.reason})`).join("、")}。`,
     "",
-    `${style.closing} 倡导领养代替购买,这些性格特质在田园猫中同样存在。本报告为参考建议,每只猫都是独立的个体。`,
-  ].join("\n\n");
+    closingVerdict,
+    "倡导领养代替购买,这些性格特质在田园猫中同样存在。本报告为参考建议,每只猫都是独立的个体。",
+  ].filter(Boolean).join("\n\n");
+
+  return normalizeChinesePunctuation(report);
 }
 
 export async function* generateLocalReportStream(input: LocalReportInput): AsyncGenerator<string> {
@@ -151,30 +151,183 @@ function premiumLabel(key: string, value?: string): string {
   return value ? premiumFlagLabel(key, value) : "这一项信息暂缺,建议按保守预算处理。";
 }
 
-function hardLabel(key: string, value?: string): string | null {
-  if (!value) return null;
-  return HARD_FLAG_LABELS[key]?.[value] ?? null;
+function pickVariant(values: string[], sessionId: string, key: string): string {
+  if (values.length === 0) return "";
+  return values[hashString(`${sessionId}:${key}`) % values.length];
 }
 
-function hardSummary(flags: HardFlags): string {
-  const labels = [
-    hardLabel("schedule", flags.schedule),
-    hardLabel("space", flags.space),
-    hardLabel("budget", flags.budget),
-    hardLabel("shedding", flags.shedding),
-    hardLabel("care_time", flags.care_time),
-    hardLabel("consent", flags.consent),
-    hardLabel("medical_buffer", flags.medical_buffer),
-  ].filter(Boolean);
-  return labels.length > 0 ? labels.join("、") : "你对养猫的偏好比较开放";
+function hashString(value: string): number {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
 }
 
-function compactClues(answersSummary: string[]): string {
-  return answersSummary
-    .filter((line) => /预算|空间|作息|掉毛|陪伴|医疗|室友|家人|清洁/.test(line))
+function fillTemplate(template: string, values: Record<string, string>): string {
+  return template.replace(/\{([^}]+)\}/g, (placeholder, key: string) => values[key] ?? placeholder);
+}
+
+function answerText(summary: string): string {
+  const [, answer = summary] = summary.split(/\s*→\s*/, 2);
+  return answer.trim();
+}
+
+function answerCategory(summary: string): string | null {
+  const [question] = summary.split(/\s*→\s*/, 1);
+  const mappings: Array<[RegExp, string]> = [
+    [/几点睡|周五晚上|作息/, "schedule"],
+    [/掉毛/, "shedding"],
+    [/下班回家|陪伴|互动/, "care_time"],
+    [/急诊|医疗|生病/, "medical"],
+    [/住的地方|住在哪里|空间/, "space"],
+    [/买东西|月预算|预算/, "budget"],
+    [/能不能养|室友|家人|房东|居住许可/, "consent"],
+  ];
+  return mappings.find(([pattern]) => pattern.test(question))?.[1] ?? null;
+}
+
+function wovenAnswerLines(input: LocalReportInput, breedName: string): string[] {
+  const candidates = input.answersSummary
+    .map((summary, index) => ({
+      category: answerCategory(summary),
+      answer: answerText(summary),
+      index,
+    }))
+    .filter((item): item is { category: string; answer: string; index: number } => (
+      Boolean(item.category && item.answer && REPORT_VARIANTS.weave[item.category]?.length)
+    ))
+    .map((item) => ({
+      ...item,
+      signal: answerSignalStrength(input.hardFlags, item.category),
+    }));
+
+  const selectedCategories = new Set<string>();
+  return candidates
+    .sort((left, right) => (
+      right.signal - left.signal
+      || hashString(`${input.sessionId}:weave:${left.category}:${left.index}`)
+      - hashString(`${input.sessionId}:weave:${right.category}:${right.index}`)
+    ))
+    .filter((item) => {
+      if (selectedCategories.has(item.category)) return false;
+      selectedCategories.add(item.category);
+      return true;
+    })
     .slice(0, 3)
-    .map((line) => line.replace(/\s+/g, ""))
-    .join("; ");
+    .map((item) => fillTemplate(
+      pickVariant(REPORT_VARIANTS.weave[item.category], input.sessionId, `weave:${item.category}`),
+      { answer: item.answer, breed: breedName },
+    ));
+}
+
+function answerSignalStrength(hardFlags: HardFlags, category: string): number {
+  const values: Record<string, Record<string, number>> = {
+    consent: { blocked: 100, negotiating: 90, discussed: 40, clear: 20 },
+    medical: { low: 90, tight: 80, mid: 50, high: 20 },
+    budget: { low: 80, mid: 50, high: 20 },
+    space: { small: 75, medium: 45, large: 20 },
+    shedding: { low: 70, mid: 40, high: 20 },
+    care_time: { low: 65, mid: 40, high: 20 },
+    schedule: { irregular: 60, busy: 60, night: 50, normal: 30, regular: 20 },
+  };
+  const flagKey = category === "medical" ? "medical_buffer" : category;
+  const flagValue = hardFlags[flagKey];
+  return flagValue ? values[category]?.[flagValue] ?? 0 : 0;
+}
+
+function catNamesForSession(sessionId: string, emotionalNeed?: string): CatName[] {
+  const groups = REPORT_VARIANTS.catNames[emotionalNeed ?? "companionship"]
+    ?? REPORT_VARIANTS.catNames.companionship
+    ?? [];
+  if (groups.length === 0) return [];
+  return groups[hashString(`${sessionId}:catNames`) % groups.length];
+}
+
+function buildBreedComparison(input: LocalReportInput): string[] {
+  const main = input.breedFacts ?? breedByName(input.persona.primaryBreed.name);
+  const alternatives = input.persona.altBreeds
+    .slice(0, 2)
+    .map((item) => breedByName(item.name))
+    .filter((item): item is BreedProfile => Boolean(item));
+  const compared = [main, ...alternatives].filter((item): item is BreedProfile => Boolean(item));
+  if (compared.length < 3) return [];
+
+  const dimensions = [
+    { key: "cost", priority: input.hardFlags.budget === "low" ? 0 : 10 },
+    { key: "space", priority: input.hardFlags.space === "small" ? 1 : 10 },
+    { key: "shedding", priority: input.hardFlags.shedding === "low" ? 2 : 10 },
+    { key: "clinginess", priority: input.hardFlags.care_time === "low" ? 3 : 10 },
+  ].sort((left, right) => (
+    left.priority - right.priority
+    || hashString(`${input.sessionId}:dimension:${left.key}`) - hashString(`${input.sessionId}:dimension:${right.key}`)
+  )).slice(0, 3);
+
+  const lines = dimensions.map(({ key }) => comparisonLine(key, compared));
+  const lowerPressure = chooseLowerPressureBreed(compared, dimensions.map((item) => item.key));
+  const conflictDimension = dimensions.map((item) => comparisonDimensionLabel(item.key)).join("和");
+  const closing = fillTemplate(
+    pickVariant(REPORT_VARIANTS.comparisonClosing.default, input.sessionId, "comparisonClosing"),
+    {
+      冲突维度: conflictDimension,
+      低压选项: lowerPressure.name,
+      主推: compared[0].name,
+    },
+  );
+
+  return ["在你最在意的几个维度上，把三只放在一起看：", ...lines, closing];
+}
+
+function comparisonLine(key: string, breeds: BreedProfile[]): string {
+  if (key === "cost") {
+    return `月花费(主粮+猫砂+护理合计)：${breeds.map((breed) => {
+      const minimum = breed.costDetail.food[0] + breed.costDetail.litter[0] + breed.costDetail.other[0];
+      const maximum = breed.costDetail.food[1] + breed.costDetail.litter[1] + breed.costDetail.other[1];
+      return `${breed.name}${minimum}-${maximum}元`;
+    }).join("；")}。`;
+  }
+  if (key === "shedding") {
+    return `掉毛压力：${breeds.map((breed) => `${breed.name}${levelLabel(breed.shedding)}`).join("；")}。`;
+  }
+  if (key === "space") {
+    return `小空间适配：${breeds.map((breed) => `${breed.name}${levelLabel(breed.smallSpaceFit)}`).join("；")}。`;
+  }
+  return `粘人程度：${breeds.map((breed) => `${breed.name}${levelLabel(breed.clinginess)}`).join("；")}。`;
+}
+
+function levelLabel(level: string): string {
+  const labels: Record<string, string> = {
+    low: "低",
+    low_mid: "中低",
+    mid: "中",
+    mid_high: "中高",
+    high: "高",
+  };
+  return labels[level] ?? level;
+}
+
+function comparisonDimensionLabel(key: string): string {
+  return {
+    shedding: "掉毛",
+    cost: "预算",
+    space: "空间",
+    clinginess: "陪伴时间",
+  }[key] ?? key;
+}
+
+function chooseLowerPressureBreed(breeds: BreedProfile[], dimensions: string[]): BreedProfile {
+  const levels: Record<string, number> = { low: 1, low_mid: 2, mid: 3, mid_high: 4, high: 5 };
+  return [...breeds].sort((left, right) => {
+    const pressure = (breed: BreedProfile) => dimensions.reduce((total, key) => {
+      if (key === "cost") {
+        return total + breed.costDetail.food[1] + breed.costDetail.litter[1] + breed.costDetail.other[1];
+      }
+      if (key === "space") return total + (6 - (levels[breed.smallSpaceFit] ?? 3)) * 100;
+      return total + (levels[breed[key as "shedding" | "clinginess"]] ?? 3) * 100;
+    }, 0);
+    return pressure(left) - pressure(right);
+  })[0];
 }
 
 function budgetAdvice(premium: PremiumFlags, hard: HardFlags, breed?: BreedProfile): string {
@@ -191,16 +344,23 @@ function budgetAdvice(premium: PremiumFlags, hard: HardFlags, breed?: BreedProfi
   return "预算处在可计划区间,适合先定月度上限,再决定品种和用品档位。";
 }
 
-function housingAdvice(premium: PremiumFlags, hard: HardFlags, breed?: BreedProfile): string {
-  if (premium.home_control === "shared" || premium.home_control === "negotiated" || hard.consent === "negotiating") {
-    return "你需要先确认室友、家人或房东的许可,并把猫砂盆、抓板和活动范围写成明确方案。";
-  }
-  if (hard.space === "small" || premium.premium_housing === "shared") {
+function housingAdvice(hard: HardFlags, breed?: BreedProfile): string {
+  if (hard.space === "small") {
     return breed?.smallSpaceFit === "low"
       ? "空间会是主要限制,建议优先考虑活动量更低、适应小空间更好的备选猫。"
       : "空间不是不能养,但要把垂直活动区、猫砂盆位置和收纳动线提前设计好。";
   }
   return "居住条件相对稳定,适合做长期规划,重点是保持固定活动区和安静休息区。";
+}
+
+function consentAdvice(premium: PremiumFlags, hard: HardFlags): string | null {
+  const consent = hard.consent;
+  const sharedHome = premium.home_control === "shared" || premium.home_control === "negotiated";
+  if (!consent && !sharedHome) return null;
+  if (consent === "blocked" || consent === "negotiating" || sharedHome) {
+    return "你需要先确认室友、家人或房东的许可，并把猫砂盆、抓板和活动范围写成明确方案。";
+  }
+  return "居住许可已经比较明确，接猫前再把日常分工和活动范围确认一次。";
 }
 
 function scheduleAdvice(hard: HardFlags, breed?: BreedProfile): string {
@@ -232,7 +392,7 @@ function buildConflictText(conflict: BreedConflict | undefined, breedName: strin
   if (!conflict?.hasConflict) {
     return "综合判断:目前没有明显硬冲突,但仍要记住,品种只是参考,真实相处还要看具体猫的性格。";
   }
-  return `综合判断:你的${conflict.typeLabels.join("、")}和${breedName}存在现实拉扯。建议不是否定这份喜欢,而是先把相关条件补齐;如果想更稳,可以认真看看${conflict.softAlternative ?? "维护压力更低的猫"}。`;
+  return `综合判断:你的${conflict.typeLabels.join("、")}和${breedName}存在现实拉扯。建议不是否定这份喜欢,而是先把相关条件补齐;如果想更稳,可以认真看看${conflict.softAlternative ?? "维护压力更低的猫"}。${STYLE_COPY.direct.closing}`;
 }
 
 function emotionParagraph(premium: PremiumFlags, style: StyleCopy): string {
@@ -272,7 +432,7 @@ function buildRisks(input: LocalReportInput): [string, string, string] {
   const premium = input.premiumFlags;
   const first = riskForMainWorry(premium.main_worry);
   const second = input.conflict?.hasConflict
-    ? `匹配风险:${input.conflict.typeLabels.join("、")}已经提示现实拉扯。解决方案:先完成对应准备,再把${input.persona.primaryBreed.name}和${input.conflict.softAlternative ?? "更低维护的猫"}放在同一张表里比较。`
+    ? `匹配风险:上面综合判断里提到的两件事,是你最该先解决的。解决方案:先完成对应准备,再把${input.persona.primaryBreed.name}和${input.conflict.softAlternative ?? "更低维护的猫"}放在同一张表里比较。`
     : "匹配风险:即使结论很顺,也不要把品种当保证。解决方案:看猫时观察亲人度、胆量、食欲和应激反应,不要只看照片。";
   const third = medicalOrRoutineRisk(input);
   return [first, second, third];
@@ -294,7 +454,7 @@ function riskForMainWorry(worry?: string): string {
   if (worry === "mismatch") {
     return "性格不合风险:你想象中的猫和真实的猫可能不同。解决方案:优先线下接触,给自己和猫都留试探空间。";
   }
-  return "成本风险:长期支出会比第一眼看到的用品价格更重要。解决方案:先做月预算和突发医疗预算,不要把兑换报告当成接猫许可。";
+  return "成本风险:长期支出会比第一眼看到的用品价格更重要。解决方案:先做月预算和突发医疗预算。这份报告是帮你想清楚的,不是催你出发的。";
 }
 
 function medicalOrRoutineRisk(input: LocalReportInput): string {
@@ -307,35 +467,19 @@ function medicalOrRoutineRisk(input: LocalReportInput): string {
   return "新手风险:前一个月最容易因为用品、喂食和清洁节奏慌乱。解决方案:用品少而准,每天记录食欲、排便和精神状态。";
 }
 
-function catNamesFor(emotionalNeed?: string): Array<{ name: string; reason: string }> {
-  if (emotionalNeed === "comfort") {
-    return [
-      { name: "小棉", reason: "像一块安静的软垫" },
-      { name: "团团", reason: "把低落的日子轻轻团住" },
-      { name: "暖灯", reason: "回家时有一点亮" },
-    ];
-  }
-  if (emotionalNeed === "routine") {
-    return [
-      { name: "小钟", reason: "提醒生活回到节奏" },
-      { name: "早早", reason: "把每天从照顾开始" },
-      { name: "格子", reason: "适合有秩序的小猫" },
-    ];
-  }
-  if (emotionalNeed === "playfulness") {
-    return [
-      { name: "跳跳", reason: "带一点轻快的生命力" },
-      { name: "咕噜", reason: "有互动也有满足" },
-      { name: "豆包", reason: "活泼但不锋利" },
-    ];
-  }
-  return [
-    { name: "灯灯", reason: "像家里一直留着的小灯" },
-    { name: "小满", reason: "不必太满,刚刚好" },
-    { name: "安安", reason: "把陪伴落到安稳里" },
-  ];
-}
-
 function formatRange(range: [number, number]): string {
   return `${range[0]}-${range[1]}`;
+}
+
+function withoutTerminalPeriod(value: string): string {
+  return value.replace(/。$/, "");
+}
+
+function normalizeChinesePunctuation(value: string): string {
+  return value
+    .replace(/([\u3400-\u9fff）】》」』”’]),/g, "$1，")
+    .replace(/([\u3400-\u9fff）】》」』”’]):/g, "$1：")
+    .replace(/([\u3400-\u9fff）】》」』”’]);/g, "$1；")
+    .replace(/([\u3400-\u9fff）】》」』”’])\?/g, "$1？")
+    .replace(/([\u3400-\u9fff）】》」』”’])!/g, "$1！");
 }
