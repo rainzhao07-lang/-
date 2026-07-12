@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { paymentProvider } from "@/lib/payment/code-redemption";
 import { allowRequest } from "@/lib/rate-limit";
-import { redeemSharedAccessCode } from "@/lib/shared-access-redemption";
+import {
+  redeemSharedAccessCode,
+  SHARED_DAILY_LIMIT_ERROR,
+} from "@/lib/shared-access-redemption";
 import { isExpiredPreviousSharedAccessCode } from "@/lib/shared-access-code";
 
 export const runtime = "nodejs";
@@ -46,7 +49,10 @@ export async function POST(req: Request) {
     }
 
     const sharedRedeemed = await redeemSharedAccessCode(sessionId, code);
-    if (!sharedRedeemed) {
+    if (sharedRedeemed === "limit_reached") {
+      return NextResponse.json({ error: SHARED_DAILY_LIMIT_ERROR }, { status: 403 });
+    }
+    if (sharedRedeemed === "invalid") {
       if (isExpiredPreviousSharedAccessCode(code)) {
         return NextResponse.json(
           { error: "该限时码已更换(每天 18:00 轮换),请到获取渠道领取最新码。" },

@@ -1,7 +1,7 @@
 import { randomInt } from "node:crypto";
 import { NextResponse } from "next/server";
 import { adminSecretMatches, hasAdminSecret } from "@/lib/admin-auth";
-import { db } from "@/lib/db";
+import { db, type RedeemCodeRecord } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -60,19 +60,90 @@ function buildCsv(codes: string[], channel: string, batch: string) {
   return `${rows.map((row) => row.map(csvCell).join(",")).join("\n")}\n`;
 }
 
+function deliveryText(code: string) {
+  return `兑换码：${code}\n测试入口：${redeemUrl(code)}\n完成测试后点击“解锁报告”即可使用。`;
+}
+
+function buildBatchCsv(codes: RedeemCodeRecord[]) {
+  const rows = [
+    ["code", "redeem_url", "channel", "batch", "delivery_text", "used", "usedAt"],
+    ...codes.map((item) => [
+      item.code,
+      redeemUrl(item.code),
+      item.channel,
+      item.batch,
+      deliveryText(item.code),
+      String(item.used),
+      item.usedAt ?? "",
+    ]),
+  ];
+
+  return `${rows.map((row) => row.map(csvCell).join(",")).join("\n")}\n`;
+}
+
 function safeFilenamePart(value: string) {
   return value.replace(/[^a-zA-Z0-9_-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") || "batch";
 }
 
-export async function POST(req: Request) {
+function adminError(req: Request): NextResponse | null {
   if (!hasAdminSecret()) {
     return NextResponse.json({ error: "服务端未配置 ADMIN_SECRET" }, { status: 500 });
   }
-
-  const provided = req.headers.get("x-admin-secret") ?? "";
-  if (!adminSecretMatches(provided)) {
+  if (!adminSecretMatches(req.headers.get("x-admin-secret") ?? "")) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
+  return null;
+}
+
+export async function GET(req: Request) {
+  const authError = adminError(req);
+  if (authError) return authError;
+
+  const url = new URL(req.url);
+  const code = url.searchParams.get("code")?.trim().toUpperCase();
+  const batch = url.searchParams.get("batch")?.trim();
+  const format = url.searchParams.get("format");
+
+  try {
+    if (code) {
+      const found = await db.getCode(code);
+      return NextResponse.json(found
+        ? { found: true, ...found }
+        : {
+            found: false,
+            code,
+            used: false,
+            usedBySession: null,
+            usedAt: null,
+            channel: null,
+            batch: null,
+            createdAt: null,
+          });
+    }
+
+    if (batch) {
+      const codes = await db.listCodesByBatch(batch);
+      if (format === "csv") {
+        return new NextResponse(buildBatchCsv(codes), {
+          headers: {
+            "content-type": "text/csv; charset=utf-8",
+            "content-disposition": `attachment; filename="benmingmao-codes-${safeFilenamePart(batch)}.csv"`,
+          },
+        });
+      }
+      return NextResponse.json(codes);
+    }
+
+    return NextResponse.json({ error: "必须提供 code 或 batch" }, { status: 400 });
+  } catch (error) {
+    console.error("[admin/codes] query failed:", error);
+    return NextResponse.json({ error: "查询失败，请稍后重试" }, { status: 503 });
+  }
+}
+
+export async function POST(req: Request) {
+  const authError = adminError(req);
+  if (authError) return authError;
 
   let body: RequestBody;
   try {
@@ -114,7 +185,7 @@ export async function POST(req: Request) {
     codes: list.map((code) => ({
       code,
       redeemUrl: redeemUrl(code),
-      deliveryText: `兑换码：${code}\n测试入口：${redeemUrl(code)}\n完成测试后点击“解锁报告”即可使用。`,
+      deliveryText: deliveryText(code),
     })),
   });
 }

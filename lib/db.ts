@@ -34,6 +34,28 @@ export type InsertCodesMeta = {
   batch: string;
 };
 
+export type RedeemCodeRecord = {
+  code: string;
+  used: boolean;
+  usedBySession: string | null;
+  usedAt: string | null;
+  channel: string;
+  batch: string;
+  createdAt: string;
+};
+
+export type DailyStatsRecord = {
+  date: string;
+  sessions: number;
+  reports: number;
+  oneTimeRedeems: number;
+  sharedRedeems: number;
+};
+
+export type SharedRedemptionClaim =
+  | { status: "recorded"; id: string }
+  | { status: "limit_reached" };
+
 /** claimReportGeneration 的三种结果:拿到生成权 / 已有缓存 / 别人正在生成 */
 export type ReportClaim =
   | { status: "claimed" }
@@ -58,6 +80,11 @@ export interface Db {
    */
   markSessionPaid(sessionId: string): Promise<boolean>;
   insertCodes(codes: string[], meta?: InsertCodesMeta): Promise<void>;
+  getCode(code: string): Promise<RedeemCodeRecord | null>;
+  listCodesByBatch(batch: string): Promise<RedeemCodeRecord[]>;
+  getDailyStats(days: number, now?: Date): Promise<DailyStatsRecord[]>;
+  recordSharedRedemption(windowStart: string, sessionId: string, limit: number | null): Promise<SharedRedemptionClaim>;
+  removeSharedRedemption(id: string): Promise<void>;
   /**
    * 抢占报告生成权(跨实例安全)。基础设施错误直接抛,调用方应返回 503,
    * 绝不能把异常当成"无缓存"继续生成。
@@ -149,6 +176,64 @@ function supabaseDb(url: string, serviceRoleKey: string): Db {
       if (error) throw new Error(`insertCodes failed: ${error.message}`);
     },
 
+    async getCode(code) {
+      const { data, error } = await client
+        .from("redeem_codes")
+        .select("code, used, used_by_session, used_at, channel, batch, created_at")
+        .eq("code", code)
+        .maybeSingle();
+      if (error) throw new Error(`getCode failed: ${error.message}`);
+      return data ? rowToRedeemCode(data) : null;
+    },
+
+    async listCodesByBatch(batch) {
+      const { data, error } = await client
+        .from("redeem_codes")
+        .select("code, used, used_by_session, used_at, channel, batch, created_at")
+        .eq("batch", batch)
+        .order("created_at", { ascending: true });
+      if (error) throw new Error(`listCodesByBatch failed: ${error.message}`);
+      return (data ?? []).map(rowToRedeemCode);
+    },
+
+    async getDailyStats(days, now = new Date()) {
+      const { startIso, buckets } = createDailyStatsBuckets(days, now);
+      const sessions = await selectDateColumn(client, "sessions", "created_at", startIso);
+      const reports = await selectDateColumn(client, "reports", "created_at", startIso);
+      const oneTimeRedeems = await selectDateColumn(client, "redeem_codes", "used_at", startIso);
+      const sharedRedeems = await selectDateColumn(client, "shared_redemptions", "created_at", startIso);
+
+      addDatesToBuckets(buckets, sessions, "sessions");
+      addDatesToBuckets(buckets, reports, "reports");
+      addDatesToBuckets(buckets, oneTimeRedeems, "oneTimeRedeems");
+      addDatesToBuckets(buckets, sharedRedeems, "sharedRedeems");
+      return [...buckets.values()];
+    },
+
+    async recordSharedRedemption(windowStart, sessionId, limit) {
+      if (limit !== null) {
+        const { count, error: countError } = await client
+          .from("shared_redemptions")
+          .select("id", { count: "exact", head: true })
+          .eq("window_start", windowStart);
+        if (countError) throw new Error(`countSharedRedemptions failed: ${countError.message}`);
+        if ((count ?? 0) >= limit) return { status: "limit_reached" };
+      }
+
+      const { data, error } = await client
+        .from("shared_redemptions")
+        .insert({ window_start: windowStart, session_id: sessionId })
+        .select("id")
+        .single();
+      if (error) throw new Error(`recordSharedRedemption failed: ${error.message}`);
+      return { status: "recorded", id: String(data.id) };
+    },
+
+    async removeSharedRedemption(id) {
+      const { error } = await client.from("shared_redemptions").delete().eq("id", id);
+      if (error) throw new Error(`removeSharedRedemption failed: ${error.message}`);
+    },
+
     async claimReportGeneration(sessionId) {
       // 1) 尝试原子插入占位行:主键冲突即"已有人在做/已做完"
       const { error: insErr } = await client
@@ -228,13 +313,97 @@ function rowToSession(row: Record<string, unknown>): SessionRecord {
   };
 }
 
+function rowToRedeemCode(row: Record<string, unknown>): RedeemCodeRecord {
+  return {
+    code: row.code as string,
+    used: Boolean(row.used),
+    usedBySession: (row.used_by_session as string | null | undefined) ?? null,
+    usedAt: (row.used_at as string | null | undefined) ?? null,
+    channel: row.channel as string,
+    batch: row.batch as string,
+    createdAt: row.created_at as string,
+  };
+}
+
+const BEIJING_OFFSET_MS = 8 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const PAGE_SIZE = 1000;
+
+function beijingDateKey(value: string | Date): string {
+  const date = value instanceof Date ? value : new Date(value);
+  return new Date(date.getTime() + BEIJING_OFFSET_MS).toISOString().slice(0, 10);
+}
+
+function createDailyStatsBuckets(days: number, now: Date) {
+  const beijingTodayStart = Math.floor((now.getTime() + BEIJING_OFFSET_MS) / DAY_MS) * DAY_MS;
+  const firstBeijingDay = beijingTodayStart - (days - 1) * DAY_MS;
+  const startIso = new Date(firstBeijingDay - BEIJING_OFFSET_MS).toISOString();
+  const buckets = new Map<string, DailyStatsRecord>();
+
+  for (let index = 0; index < days; index += 1) {
+    const date = new Date(firstBeijingDay + index * DAY_MS).toISOString().slice(0, 10);
+    buckets.set(date, { date, sessions: 0, reports: 0, oneTimeRedeems: 0, sharedRedeems: 0 });
+  }
+
+  return { startIso, buckets };
+}
+
+async function selectDateColumn(
+  client: SupabaseClient,
+  table: string,
+  column: string,
+  startIso: string,
+): Promise<string[]> {
+  const values: string[] = [];
+  let from = 0;
+
+  while (true) {
+    const { data, error } = await client
+      .from(table)
+      .select(column)
+      .gte(column, startIso)
+      .order(column, { ascending: true })
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) throw new Error(`selectDateColumn ${table}.${column} failed: ${error.message}`);
+
+    const rows = (data ?? []) as unknown as Array<Record<string, unknown>>;
+    for (const row of rows) {
+      if (typeof row[column] === "string") values.push(row[column] as string);
+    }
+    if (rows.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
+  }
+
+  return values;
+}
+
+function addDatesToBuckets(
+  buckets: Map<string, DailyStatsRecord>,
+  values: string[],
+  field: keyof Omit<DailyStatsRecord, "date">,
+) {
+  for (const value of values) {
+    const bucket = buckets.get(beijingDateKey(value));
+    if (bucket) bucket[field] += 1;
+  }
+}
+
 // ---------- 内存实现(本地开发兜底,语义与 Supabase 版对齐) ----------
 
 type MemoryStore = {
   sessions: Map<string, SessionRecord>;
-  codes: Map<string, { used: boolean; disabled: boolean; usedBySession?: string; channel: string; batch: string }>;
-  reports: Map<string, ReportRecord>;
+  codes: Map<string, {
+    used: boolean;
+    disabled: boolean;
+    usedBySession?: string;
+    usedAt?: string;
+    channel: string;
+    batch: string;
+    createdAt: string;
+  }>;
+  reports: Map<string, ReportRecord & { createdAt: string }>;
   pendingReports: Map<string, number>; // sessionId → 抢占时间戳
+  sharedRedemptions: Map<string, { id: string; windowStart: string; sessionId: string; createdAt: string }>;
 };
 
 function memoryDb(): Db {
@@ -245,8 +414,10 @@ function memoryDb(): Db {
     codes: new Map(),
     reports: new Map(),
     pendingReports: new Map(),
+    sharedRedemptions: new Map(),
   };
   const store = g.__bmm_store;
+  store.sharedRedemptions ??= new Map();
 
   return {
     async createSession({ answers, personaId, hardFlags }) {
@@ -283,6 +454,7 @@ function memoryDb(): Db {
       if (!entry || entry.used || entry.disabled || !session) return false;
       entry.used = true;
       entry.usedBySession = sessionId;
+      entry.usedAt = new Date().toISOString();
       session.paid = true;
       session.userTier = "paid";
       return true;
@@ -304,8 +476,61 @@ function memoryDb(): Db {
           disabled: false,
           channel: meta?.channel ?? "manual",
           batch: meta?.batch ?? "default",
+          createdAt: new Date().toISOString(),
         });
       }
+    },
+
+    async getCode(code) {
+      const entry = store.codes.get(code);
+      return entry ? memoryCodeRecord(code, entry) : null;
+    },
+
+    async listCodesByBatch(batch) {
+      return [...store.codes.entries()]
+        .filter(([, entry]) => entry.batch === batch)
+        .map(([code, entry]) => memoryCodeRecord(code, entry))
+        .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
+    },
+
+    async getDailyStats(days, now = new Date()) {
+      const { buckets } = createDailyStatsBuckets(days, now);
+      addDatesToBuckets(buckets, [...store.sessions.values()].map((item) => item.createdAt), "sessions");
+      addDatesToBuckets(
+        buckets,
+        [...store.reports.values()].map((item) => item.createdAt),
+        "reports",
+      );
+      addDatesToBuckets(
+        buckets,
+        [...store.codes.values()].map((item) => item.usedAt).filter(Boolean) as string[],
+        "oneTimeRedeems",
+      );
+      addDatesToBuckets(
+        buckets,
+        [...store.sharedRedemptions.values()].map((item) => item.createdAt),
+        "sharedRedeems",
+      );
+      return [...buckets.values()];
+    },
+
+    async recordSharedRedemption(windowStart, sessionId, limit) {
+      const count = [...store.sharedRedemptions.values()]
+        .filter((item) => item.windowStart === windowStart).length;
+      if (limit !== null && count >= limit) return { status: "limit_reached" };
+
+      const id = crypto.randomUUID();
+      store.sharedRedemptions.set(id, {
+        id,
+        windowStart,
+        sessionId,
+        createdAt: new Date().toISOString(),
+      });
+      return { status: "recorded", id };
+    },
+
+    async removeSharedRedemption(id) {
+      store.sharedRedemptions.delete(id);
     },
 
     async claimReportGeneration(sessionId) {
@@ -320,13 +545,28 @@ function memoryDb(): Db {
     },
 
     async finishReport(report) {
-      store.reports.set(report.sessionId, report);
+      store.reports.set(report.sessionId, { ...report, createdAt: new Date().toISOString() });
       store.pendingReports.delete(report.sessionId);
     },
 
     async releaseReportClaim(sessionId) {
       store.pendingReports.delete(sessionId);
     },
+  };
+}
+
+function memoryCodeRecord(
+  code: string,
+  entry: MemoryStore["codes"] extends Map<string, infer TValue> ? TValue : never,
+): RedeemCodeRecord {
+  return {
+    code,
+    used: entry.used,
+    usedBySession: entry.usedBySession ?? null,
+    usedAt: entry.usedAt ?? null,
+    channel: entry.channel,
+    batch: entry.batch,
+    createdAt: entry.createdAt,
   };
 }
 
@@ -337,7 +577,12 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const useSupabase = Boolean(supabaseUrl && supabaseKey);
 
 if (!useSupabase && process.env.NODE_ENV !== "test") {
-  console.warn("[db] 未配置 Supabase,使用内存数据库(仅限本地开发,数据重启即失)");
+  if (process.env.NODE_ENV === "production") {
+    console.error("[db] 生产环境未配置 Supabase,正在使用内存兜底——严禁上线!");
+  } else {
+    console.warn("[db] 未配置 Supabase,使用内存数据库(仅限本地开发,数据重启即失)");
+  }
 }
 
+export const dbStorage = useSupabase ? "supabase" : "memory";
 export const db: Db = useSupabase ? supabaseDb(supabaseUrl!, supabaseKey!) : memoryDb();

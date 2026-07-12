@@ -90,4 +90,23 @@ describe("POST /api/redeem shared-code grace period", () => {
     await expect(oldResponse.json()).resolves.toEqual({ ok: true, mode: "shared" });
     await expect(currentResponse.json()).resolves.toEqual({ ok: true, mode: "shared" });
   });
+
+  it("共享码达到每日上限后返回403与指定文案", async () => {
+    configureSharedCode();
+    vi.stubEnv("SHARED_DAILY_LIMIT", "1");
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-20T03:00:00.000Z"));
+    const code = getCurrentSharedAccessCode()!.code;
+    const first = await createSession();
+    const second = await createSession();
+
+    const firstResponse = await redeem(first.id, code, "198.51.100.21");
+    const secondResponse = await redeem(second.id, code, "198.51.100.22");
+
+    expect(firstResponse.status).toBe(200);
+    expect(secondResponse.status).toBe(403);
+    await expect(secondResponse.json()).resolves.toEqual({
+      error: "今天的限时名额已经用完啦——每天 18:00 会有新一批;不想等的话,购买兑换码可以立即解锁。",
+    });
+  });
 });

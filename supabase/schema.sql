@@ -1,7 +1,7 @@
 -- 本命猫 H5 数据库 Schema
 -- 在 Supabase SQL Editor 中执行本文件即可完成建表。
 -- 服务端使用 service_role key 访问(不受 RLS 限制);
--- 三张表显式开启 RLS 且不建任何 policy → anon key 访问默认全部拒绝。
+-- 四张表显式开启 RLS 且不建任何 policy → anon key 访问默认全部拒绝。
 
 -- 一次测试会话
 create table if not exists sessions (
@@ -38,6 +38,14 @@ create table if not exists reports (
   created_at timestamptz default now()
 );
 
+create table if not exists shared_redemptions (
+  id bigint generated always as identity primary key,
+  window_start timestamptz not null,
+  session_id text not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists idx_shared_redemptions_window on shared_redemptions (window_start);
+
 -- 已部署过旧版 schema 的项目,可重复执行以下补列语句。
 alter table sessions add column if not exists premium_answers jsonb;
 alter table sessions add column if not exists premium_flags jsonb;
@@ -54,6 +62,7 @@ create index if not exists redeem_codes_used_idx on redeem_codes(used);
 alter table sessions enable row level security;
 alter table redeem_codes enable row level security;
 alter table reports enable row level security;
+alter table shared_redemptions enable row level security;
 
 -- 兑换码原子核销:校验码未用 + 标记已用 + 标记 session 已付费,单个事务内完成,
 -- 杜绝"码已核销但 session 未标记付费"的中间态(Codex review P1)。

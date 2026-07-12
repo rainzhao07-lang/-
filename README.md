@@ -33,8 +33,24 @@ npm run check   # typecheck + 单测 + build,提交前必须全绿
 |---|---|
 | `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | Supabase 项目设置里获取。首次需在 SQL Editor 执行 `supabase/schema.sql` 建表 |
 | `ADMIN_SECRET` | 生成兑换码接口的密钥,自定义强随机串 |
+| `SHARED_ACCESS_CODE_SECRET` | 限时共享兑换码的签名密钥,使用与 `ADMIN_SECRET` 不同的强随机串 |
+| `SHARED_ACCESS_WINDOW_MINUTES` | 共享码轮换周期,正式日码设为 `1440` |
+| `SHARED_DAILY_LIMIT` | 共享码每个窗口的核销上限;留空或 `0` 表示不限 |
 | `NEXT_PUBLIC_PAY_URL` | **生产必填。换收款链接只改这一个值**:面包多/发卡网商品页地址；缺失时构建会输出上线阻塞警告 |
 | `NEXT_PUBLIC_SITE_URL` | 正式域名,用于分享卡短链与 og 分享 |
+
+## 上线前必查
+
+生产部署前必须确认以下变量都有正确值：
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `ADMIN_SECRET`
+- `SHARED_ACCESS_CODE_SECRET`
+- `NEXT_PUBLIC_PAY_URL`
+- `NEXT_PUBLIC_SITE_URL`
+
+`NEXT_PUBLIC_*` 前缀变量会在构建时固化到产物中，修改后必须重新部署才会生效。发布前还要通过管理员健康检查确认 `storage` 为 `supabase`，禁止以内存兜底状态上线。
 
 ## 运营者手册
 
