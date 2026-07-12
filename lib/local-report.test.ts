@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
+import reportVariantsJson from "@/content/reportVariants.json";
 import { breedByName, personas, premiumQuestions, questions } from "./content";
 import { buildLocalReport, generateLocalReportStream, localReportModelName } from "./local-report";
 import { collectPremiumFlags } from "./premium";
 import { reportSentenceSimilarity } from "./report-similarity";
 import { detectBreedConflict, scoreAnswers } from "./scoring";
-import type { HardFlags } from "./types";
+import type { HardFlags, PremiumFlags } from "./types";
 
 const basePremiumAnswers: number[] = premiumQuestions.map((q) => (q.id === "qP6" ? 2 : 0));
 
@@ -70,6 +71,30 @@ function reportWithHardFlags(sessionId: string, hardFlags: HardFlags) {
   });
 }
 
+function reportForAdvice(
+  sessionId: string,
+  hardFlags: HardFlags,
+  premiumFlags: PremiumFlags,
+) {
+  const persona = personas.find((item) => item.id === "dusk_weaver")!;
+  const breed = breedByName(persona.primaryBreed.name)!;
+  return buildLocalReport({
+    sessionId,
+    persona,
+    answersSummary: [],
+    hardFlags,
+    premiumFlags,
+    breedFacts: {
+      ...breed,
+      activity: "low",
+      clinginess: "low",
+      smallSpaceFit: "high",
+      monthlyCost: "mid",
+    },
+    conflict: detectBreedConflict(persona, hardFlags),
+  });
+}
+
 describe("本地规则报告生成器", () => {
   it("不依赖外部模型配置,生成六节定制报告", () => {
     const report = reportFor();
@@ -79,7 +104,8 @@ describe("本地规则报告生成器", () => {
     expect(report).toContain("## 现实适配度");
     expect(report).toContain("## 三个养猫风险和解决方案");
     expect(report).toContain("预算：");
-    expect(report).toContain("医疗备用金");
+    expect(report).toContain("医疗承受力：");
+    expect(report).toContain("备用金");
     expect(report).toContain("猫名彩蛋");
     expect(report).toContain("领养代替购买");
   });
@@ -109,7 +135,11 @@ describe("本地规则报告生成器", () => {
 
     expect(practical).not.toEqual(emotional);
     expect(practical).toContain("清单");
-    expect(emotional).toContain("被安慰");
+    expect([
+      "你真正想获得的是被安慰的感觉。",
+      "你想要的是一个不问'怎么了'也能让你好受一点的存在。",
+      "低谷的时候，语言经常是多余的。",
+    ].some((line) => emotional.includes(line))).toBe(true);
     expect(emotional).toContain("为什么这么想养猫");
   });
 
@@ -165,6 +195,32 @@ describe("本地规则报告生成器", () => {
     expect(second).not.toBe(first);
   });
 
+  it("不同句位的会话种子能形成充分分散的变体组合", () => {
+    const pools = [
+      reportVariantsJson.opening.practical,
+      reportVariantsJson.tagTransition.default,
+      reportVariantsJson.realityIntro.default,
+      reportVariantsJson.emotionIntro.default,
+      reportVariantsJson.riskIntro.default,
+      reportVariantsJson.altIntro.default,
+      reportVariantsJson.checklistIntro.default,
+      reportVariantsJson.emotionParagraph.companionship,
+      reportVariantsJson.risk.cost,
+      reportVariantsJson.risk.emergency,
+      reportVariantsJson.closingVerdict.velvet_commander,
+    ];
+    const fingerprints = new Set<string>();
+    for (let index = 0; index < 128; index += 1) {
+      const report = reportFor(basePremiumAnswers, `seed-independence-${index}`);
+      const fingerprint = pools
+        .map((pool) => pool.findIndex((variant) => report.includes(variant)))
+        .join(":");
+      fingerprints.add(fingerprint);
+    }
+
+    expect(fingerprints.size).toBeGreaterThanOrEqual(100);
+  });
+
   it("把用户选项原文分散织入至少两处，不再输出箭头问答对", () => {
     const answers = [0, 3, 0, 1, 1, 1, 2, 1, 0, 0, 3, 1, 3, 3, 2, 3];
     const report = reportForAnswerSet("weave-session", answers);
@@ -174,6 +230,24 @@ describe("本地规则报告生成器", () => {
     expect(wovenCount).toBeGreaterThanOrEqual(2);
     expect(report).not.toContain("→");
     expect(report).not.toContain("从基础题看，你身上的线索是");
+  });
+
+  it("织入答案只出现在语义匹配的报告段落", () => {
+    const answers = [0, 3, 0, 1, 1, 1, 2, 1, 0, 0, 3, 1, 3, 3, 2, 3];
+    const report = reportForAnswerSet("weave-section-session", answers);
+    const personaSection = report.split("## 为什么是")[0];
+    const whyBreedSection = report.split("## 为什么是")[1].split("## 现实适配度")[0];
+    const realitySection = report.split("## 现实适配度")[1].split("## 情绪需求")[0];
+    const realityOnlyAnswers = [
+      "还在争取，准备靠可爱和道理打动他们",
+      "我现在可能真的扛不住这种突发开销",
+    ];
+
+    for (const answer of realityOnlyAnswers) {
+      expect(personaSection).not.toContain(answer);
+      expect(whyBreedSection).not.toContain(answer);
+    }
+    expect(realityOnlyAnswers.some((answer) => realitySection.includes(answer))).toBe(true);
   });
 
   it("包含三品种真实对比、品种专属用品和人格收尾判词", () => {
@@ -196,9 +270,84 @@ describe("本地规则报告生成器", () => {
     const expectedMaximum = maine.costDetail.food[1] + maine.costDetail.litter[1] + maine.costDetail.other[1];
 
     expect(budgetReport).toContain(`缅因猫${expectedMinimum}-${expectedMaximum}元`);
-    expect(budgetReport).not.toContain("小空间适配：");
+    expect(budgetReport).not.toContain("粘人程度：");
     expect(spaceReport).toContain("小空间适配：");
     expect(spaceReport).not.toContain("粘人程度：");
+  });
+
+  it("对比块跳过全同维度、结论只写两个约束，备选猫各自成段", () => {
+    const sourcePersona = personas.find((item) => item.id === "dusk_weaver")!;
+    const persona = {
+      ...sourcePersona,
+      altBreeds: [
+        { name: "银渐层", reason: "测试备选一" },
+        { name: "英国短毛猫", reason: "测试备选二" },
+      ],
+    };
+    const mainBreed = { ...breedByName(sourcePersona.primaryBreed.name)!, smallSpaceFit: "high" as const };
+    const reports = Array.from({ length: 60 }, (_, index) => buildLocalReport({
+      sessionId: `comparison-hotfix-${index}`,
+      persona,
+      answersSummary: [],
+      hardFlags: { budget: "low", space: "small", shedding: "low", care_time: "low" },
+      premiumFlags: collectPremiumFlags(basePremiumAnswers),
+      breedFacts: mainBreed,
+      conflict: detectBreedConflict(persona, { budget: "low", space: "small", shedding: "low", care_time: "low" }),
+    }));
+
+    for (const report of reports) {
+      expect(report).not.toContain("小空间适配：");
+      const paragraphs = report.split("\n\n");
+      const firstAlternative = paragraphs.find((paragraph) => paragraph.startsWith("银渐层："));
+      const secondAlternative = paragraphs.find((paragraph) => paragraph.startsWith("英国短毛猫："));
+      expect(firstAlternative).not.toContain("英国短毛猫：");
+      expect(secondAlternative).not.toContain("银渐层：");
+    }
+
+    const constrainedClosing = reports
+      .flatMap((report) => report.split("\n\n"))
+      .find((paragraph) => paragraph.startsWith("一句话：如果"));
+    expect(constrainedClosing).toBeTruthy();
+    const constraints = constrainedClosing!.match(/^一句话：如果(.+?)是你的硬约束/)?.[1];
+    expect(constraints?.split("、")).toHaveLength(2);
+    expect(constraints).not.toContain("和");
+  });
+
+  it("现实适配度九类建议可按会话切换到任务书第二变体", () => {
+    const reports: string[] = [];
+    for (let index = 0; index < 60; index += 1) {
+      reports.push(reportForAdvice(
+        `advice-stable-${index}`,
+        { budget: "high", space: "medium", schedule: "regular", medical_buffer: "high" },
+        { budget_safety: "good", premium_medical_buffer: "reserved" },
+      ));
+      reports.push(reportForAdvice(
+        `advice-tight-${index}`,
+        { budget: "low", space: "small", schedule: "busy", care_time: "low", medical_buffer: "low" },
+        { budget_safety: "low", premium_medical_buffer: "weak" },
+      ));
+      reports.push(reportForAdvice(
+        `advice-planned-${index}`,
+        { budget: "mid", space: "medium", schedule: "regular", medical_buffer: "mid" },
+        { budget_safety: "medium", premium_medical_buffer: "medium" },
+      ));
+    }
+
+    const expectedVariants = [
+      "空间：居住条件稳，给它划一块固定的'自留地'——猫爬架加休息窝，安全感就有了。",
+      "空间：面积有限不是硬伤，垂直空间是解法——一面墙的爬架，顶得上半间房。",
+      "作息：你的时间表很稳，喂食和陪玩固定到点，它两周就能把你摸透。",
+      "作息：节奏偏自由也没关系，底线是喂食、清砂不跳票——猫要的是'可预期'",
+      "医疗承受力：这块你有准备，保持年检和疫苗节奏即可，不用焦虑。",
+      "医疗承受力：先补的是备用金——体检、疫苗、驱虫加一次急诊的钱单独放好，再谈接猫。",
+      "预算：在可计划区间，原则是主粮和医疗不省，玩具和颜值项随缘。",
+      "预算：偏紧不代表不能养，代表要把每一笔花在刀刃上——先养账本，再养猫。",
+      "预算：压力不大，反而要防'装备党'陷阱——钱依然优先给主粮、体检和备用金。",
+    ];
+    for (const variant of expectedVariants) {
+      expect(reports.some((report) => report.includes(variant)), `未挂载建议变体：${variant}`).toBe(true);
+    }
+    expect(reports.some((report) => /(预算|空间|作息|医疗承受力)：\1：/.test(report))).toBe(false);
   });
 
   it("主推品种国内可获得性为 mid 时给出稀缺提示", () => {
@@ -272,6 +421,22 @@ describe("本地规则报告生成器", () => {
     expect(spaceLine).toBeTruthy();
     expect(spaceLine).not.toContain("许可");
     expect(consentLine).toBeTruthy();
+  });
+
+  it("标点归一化覆盖织入答案中直引号后的半角标点", () => {
+    const persona = personas.find((item) => item.id === "dusk_weaver")!;
+    const report = buildLocalReport({
+      sessionId: "punctuation-weave-session",
+      persona,
+      answersSummary: ["你的作息如何？ → 猫要的是'可预期',不是'时刻在'"],
+      hardFlags: { schedule: "regular" },
+      premiumFlags: collectPremiumFlags(basePremiumAnswers),
+      breedFacts: breedByName(persona.primaryBreed.name),
+      conflict: detectBreedConflict(persona, { schedule: "regular" }),
+    });
+
+    expect(report).toContain("'可预期'，不是'时刻在'");
+    expect(report).not.toMatch(/[,:;?!]/);
   });
 
   it("同一情绪需求可按会话轮换至少三组猫名", () => {

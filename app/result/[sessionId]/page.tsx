@@ -28,19 +28,23 @@ export default async function ResultPage({
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col gap-10 px-6 py-10">
-      <section className="anim-reveal flex flex-col items-center gap-3 text-center">
-        <p className="text-xs tracking-[0.4em] text-soft">你的铲屎官人格是</p>
-        <h1 className="text-4xl font-bold tracking-wide">{persona.title}</h1>
-        <span
-          className="rounded-full border px-4 py-1 text-sm"
-          style={{ color: persona.cardTheme.accent, borderColor: persona.cardTheme.accent }}
-        >
-          {persona.subtitle}
-        </span>
-        <p className="mt-2 text-base leading-relaxed text-ink/80">“{persona.verdict}”</p>
+      <section className="flex flex-col items-center gap-3 text-center">
+        <div className="anim-reveal flex flex-col items-center gap-3">
+          <p className="text-xs tracking-[0.4em] text-soft">你的铲屎官人格是</p>
+          <h1 className="text-4xl font-bold tracking-wide">{persona.title}</h1>
+          <span
+            className="rounded-full border px-4 py-1 text-sm"
+            style={{ color: persona.cardTheme.accent, borderColor: persona.cardTheme.accent }}
+          >
+            {persona.subtitle}
+          </span>
+        </div>
+        <p className="anim-fade-up-delay-1 mt-2 text-base leading-relaxed text-ink/80">
+          “{persona.verdict}”
+        </p>
       </section>
 
-      <section className="anim-fade-up-delay-1 rounded-card bg-white p-6 shadow-sm">
+      <section className="anim-fade-up-delay-2 rounded-card bg-white p-6 shadow-sm">
         <p className="text-xs tracking-[0.3em] text-soft">你的本命猫</p>
         <h2 className="mt-2 text-2xl font-bold" style={{ color: persona.cardTheme.accent }}>
           {persona.primaryBreed.name}
@@ -55,7 +59,7 @@ export default async function ResultPage({
         )}
       </section>
 
-      <section className="anim-fade-up-delay-2 flex flex-col items-center gap-4">
+      <section className="anim-fade-up-delay-3 flex flex-col items-center gap-4">
         <img
           src={`/api/card/${sessionId}`}
           alt={`${persona.title} 分享卡`}

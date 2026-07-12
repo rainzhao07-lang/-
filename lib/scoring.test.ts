@@ -59,18 +59,18 @@ describe("数据文件完整性", () => {
     const dusk = personas.find((persona) => persona.id === "dusk_weaver")!;
     expect(dusk.primaryBreed).toEqual({
       name: "英国长毛猫",
-      reason: "毛茸茸的慢性子,把'陪着你'这件事做到极致——而且比看起来更好养,是治愈系里的务实之选。",
+      reason: "毛茸茸的慢性子，把'陪着你'这件事做到极致——而且比看起来更好养，是治愈系里的务实之选。",
     });
     expect(dusk.altBreeds[0]).toEqual({
       name: "异国短毛猫",
-      reason: "一张自带治愈力的脸,慢吞吞、软乎乎——但它的扁脸可爱也脆弱:泪痕、呼吸道需要终身细心,选它等于选一份更重的照顾承诺。",
+      reason: "一张自带治愈力的脸，慢吞吞、软乎乎——但它的扁脸可爱也脆弱：泪痕、呼吸道需要终身细心，选它等于选一份更重的照顾承诺。",
     });
 
     const keeper = personas.find((persona) => persona.id === "harbor_keeper")!;
     expect(keeper.title).toBe("静海守灯人");
     expect(keeper.altBreeds[0]).toEqual({
       name: "英短蓝猫",
-      reason: "沉稳的蓝灰色绅士,数量多、好相处,是守望者的现实之选。",
+      reason: "沉稳的蓝灰色绅士，数量多、好相处，是守望者的现实之选。",
     });
     expect(breedByName("英短蓝猫")).toEqual({
       ...breedByName("英国短毛猫")!,
@@ -78,7 +78,7 @@ describe("数据文件完整性", () => {
     });
 
     const dawn = personas.find((persona) => persona.id === "dawn_expeditioner")!;
-    expect(dawn.altBreeds[0].reason).toBe("把每一天过成探险片的顶配玩家——但它需要大量运动与经验,适合已经确定自己精力过剩的你。");
+    expect(dawn.altBreeds[0].reason).toBe("把每一天过成探险片的顶配玩家——但它需要大量运动与经验，适合已经确定自己精力过剩的你。");
     expect(personas.some((persona) => persona.title === "深港守灯人")).toBe(false);
   });
 

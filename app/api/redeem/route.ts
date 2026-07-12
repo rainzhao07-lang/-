@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { paymentProvider } from "@/lib/payment/code-redemption";
 import { allowRequest } from "@/lib/rate-limit";
 import { redeemSharedAccessCode } from "@/lib/shared-access-redemption";
+import { isExpiredPreviousSharedAccessCode } from "@/lib/shared-access-code";
 
 export const runtime = "nodejs";
 
@@ -46,6 +47,12 @@ export async function POST(req: Request) {
 
     const sharedRedeemed = await redeemSharedAccessCode(sessionId, code);
     if (!sharedRedeemed) {
+      if (isExpiredPreviousSharedAccessCode(code)) {
+        return NextResponse.json(
+          { error: "该限时码已更换(每天 18:00 轮换),请到获取渠道领取最新码。" },
+          { status: 400 },
+        );
+      }
       return NextResponse.json({ error: "兑换码无效或已使用" }, { status: 400 });
     }
 
