@@ -3,6 +3,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 const ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 const CODE_LENGTH = 12;
 const CHINA_OFFSET_MS = 8 * 60 * 60 * 1000;
+const DAILY_ROLLOVER_OFFSET_MS = 18 * 60 * 60 * 1000;
 const SUPPORTED_WINDOWS = new Set([60, 1440]);
 
 export type SharedAccessCode = {
@@ -41,7 +42,7 @@ function codeForWindow(secret: string, windowStartMs: number, windowMinutes: num
 }
 
 /**
- * 以北京时间切分时段。日码会在北京时间 00:00 轮换；时码在整点轮换。
+ * 以北京时间切分时段。日码会在北京时间 18:00 轮换；时码在整点轮换。
  * 没有配置密钥时返回 null，避免意外开启共享兑换。
  */
 export function getCurrentSharedAccessCode(now = new Date()): SharedAccessCode | null {
@@ -51,7 +52,9 @@ export function getCurrentSharedAccessCode(now = new Date()): SharedAccessCode |
   const windowMinutes = configuredWindowMinutes();
   const windowMs = windowMinutes * 60 * 1000;
   const chinaNowMs = now.getTime() + CHINA_OFFSET_MS;
-  const chinaWindowStartMs = Math.floor(chinaNowMs / windowMs) * windowMs;
+  const rolloverOffsetMs = windowMinutes === 1440 ? DAILY_ROLLOVER_OFFSET_MS : 0;
+  const shiftedChinaNowMs = chinaNowMs - rolloverOffsetMs;
+  const chinaWindowStartMs = Math.floor(shiftedChinaNowMs / windowMs) * windowMs + rolloverOffsetMs;
   const windowStartMs = chinaWindowStartMs - CHINA_OFFSET_MS;
   const validFrom = new Date(windowStartMs);
   const validUntil = new Date(windowStartMs + windowMs);

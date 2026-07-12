@@ -18,15 +18,18 @@ describe("shared access code", () => {
     expect(verifySharedAccessCode(current!.code, new Date(current!.validUntil.getTime()))).toBeNull();
   });
 
-  it("日码在北京时间零点轮换", () => {
+  it("日码在北京时间18点轮换", () => {
     vi.stubEnv("SHARED_ACCESS_CODE_SECRET", "test-shared-secret");
     vi.stubEnv("SHARED_ACCESS_WINDOW_MINUTES", "1440");
 
-    const beforeMidnight = getCurrentSharedAccessCode(new Date("2026-07-09T15:59:59.000Z"));
-    const afterMidnight = getCurrentSharedAccessCode(new Date("2026-07-09T16:00:00.000Z"));
-    expect(beforeMidnight?.validUntil.toISOString()).toBe("2026-07-09T16:00:00.000Z");
-    expect(afterMidnight?.validFrom.toISOString()).toBe("2026-07-09T16:00:00.000Z");
-    expect(afterMidnight?.code).not.toBe(beforeMidnight?.code);
+    const beforeSix = getCurrentSharedAccessCode(new Date("2026-07-12T09:59:59.000Z"));
+    const afterSix = getCurrentSharedAccessCode(new Date("2026-07-12T10:00:00.000Z"));
+    expect(beforeSix?.validFrom.toISOString()).toBe("2026-07-11T10:00:00.000Z");
+    expect(beforeSix?.validUntil.toISOString()).toBe("2026-07-12T10:00:00.000Z");
+    expect(afterSix?.validFrom.toISOString()).toBe("2026-07-12T10:00:00.000Z");
+    expect(afterSix?.validUntil.toISOString()).toBe("2026-07-13T10:00:00.000Z");
+    expect(afterSix?.code).not.toBe(beforeSix?.code);
+    expect(verifySharedAccessCode(beforeSix!.code, new Date("2026-07-12T10:00:00.000Z"))).toBeNull();
   });
 
   it("未配置共享密钥时不会开启共享兑换", () => {
