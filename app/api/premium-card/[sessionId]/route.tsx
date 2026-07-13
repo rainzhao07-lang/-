@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { ImageResponse } from "next/og";
+import { shareCardQr } from "@/lib/card-qr";
 import { personaById } from "@/lib/content";
 import { db } from "@/lib/db";
 import { canAccessPremiumCard, premiumFlagLabel } from "@/lib/premium";
@@ -10,6 +11,14 @@ export const runtime = "nodejs";
 
 const WIDTH = 1080;
 const HEIGHT = 1440;
+
+// 付费卡专属配色:深可可底 + 香槟金,与免费卡的奶油底拉开档次
+const INK = "#2A211A";
+const GOLD = "#D8B77E";
+const GOLD_DEEP = "#C9A25E";
+const GOLD_LIGHT = "#EFDCB4";
+const CREAM = "#F6EEDF";
+const MUTED = "#C9B99F";
 
 let fontPromise: Promise<Buffer> | null = null;
 function loadCardFont(): Promise<Buffer> {
@@ -29,18 +38,18 @@ function cardSerial(seed: string): string {
   return String(1000 + (h % 9000));
 }
 
-function PawMark({ color }: { color: string }) {
+function PawMark({ color, size = 1 }: { color: string; size?: number }) {
   const toe = (raised: number) => ({
     display: "flex",
-    width: 18,
-    height: 18,
+    width: 18 * size,
+    height: 18 * size,
     borderRadius: 999,
     backgroundColor: color,
-    marginBottom: raised,
+    marginBottom: raised * size,
   });
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <div style={{ display: "flex", alignItems: "flex-end", gap: 7 }}>
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 7 * size }}>
         <div style={toe(1)} />
         <div style={toe(8)} />
         <div style={toe(8)} />
@@ -49,13 +58,41 @@ function PawMark({ color }: { color: string }) {
       <div
         style={{
           display: "flex",
-          width: 54,
-          height: 40,
+          width: 54 * size,
+          height: 40 * size,
           borderRadius: 999,
           backgroundColor: color,
-          marginTop: 4,
+          marginTop: 4 * size,
         }}
       />
+    </div>
+  );
+}
+
+/** 证书感四角饰角:叠在外边框四角上的加粗金色短边 */
+function CornerOrnament({ corner }: { corner: "tl" | "tr" | "bl" | "br" }) {
+  const arm = `4px solid ${GOLD}`;
+  const style: Record<string, unknown> = {
+    position: "absolute",
+    display: "flex",
+    width: 56,
+    height: 56,
+    opacity: 0.95,
+  };
+  if (corner === "tl") Object.assign(style, { top: 28, left: 28, borderTop: arm, borderLeft: arm, borderTopLeftRadius: 30 });
+  if (corner === "tr") Object.assign(style, { top: 28, right: 28, borderTop: arm, borderRight: arm, borderTopRightRadius: 30 });
+  if (corner === "bl") Object.assign(style, { bottom: 28, left: 28, borderBottom: arm, borderLeft: arm, borderBottomLeftRadius: 30 });
+  if (corner === "br") Object.assign(style, { bottom: 28, right: 28, borderBottom: arm, borderRight: arm, borderBottomRightRadius: 30 });
+  return <div style={style} />;
+}
+
+/** 金色菱形分隔线 */
+function Divider() {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+      <div style={{ display: "flex", width: 116, height: 2, backgroundImage: `linear-gradient(90deg, transparent, ${GOLD})` }} />
+      <div style={{ display: "flex", width: 12, height: 12, backgroundColor: GOLD, transform: "rotate(45deg)" }} />
+      <div style={{ display: "flex", width: 116, height: 2, backgroundImage: `linear-gradient(90deg, ${GOLD}, transparent)` }} />
     </div>
   );
 }
@@ -84,6 +121,7 @@ export async function GET(
   const highlights = buildHighlights(persona, flags);
   const accent = persona.cardTheme.accent;
   const serial = cardSerial(sessionId);
+  const qr = await shareCardQr({ dark: INK, light: "#FBF5EA" });
 
   return new ImageResponse(
     (
@@ -93,39 +131,63 @@ export async function GET(
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          backgroundColor: "#FAF6EF",
-          backgroundImage: `radial-gradient(60% 30% at 50% 0%, ${accent}1c, transparent 70%), radial-gradient(96% 48% at 50% 112%, ${accent}12, transparent 62%)`,
-          padding: "70px 66px",
+          backgroundColor: INK,
+          backgroundImage: `radial-gradient(58% 30% at 50% 0%, rgba(216,183,126,0.16), transparent 70%), radial-gradient(90% 42% at 50% 110%, ${accent}30, transparent 65%)`,
+          padding: "64px 60px",
           fontFamily: "CardFont",
-          color: "#3E3226",
+          color: CREAM,
           position: "relative",
         }}
       >
+        {/* 双层金色边框 + 四角饰角 */}
         <div
           style={{
             position: "absolute",
-            top: 30,
-            left: 30,
-            right: 30,
-            bottom: 30,
-            border: `4px solid ${accent}`,
-            borderRadius: 34,
-            opacity: 0.22,
+            top: 28,
+            left: 28,
+            right: 28,
+            bottom: 28,
+            border: "2px solid rgba(216,183,126,0.45)",
+            borderRadius: 30,
           }}
         />
+        <div
+          style={{
+            position: "absolute",
+            top: 44,
+            left: 44,
+            right: 44,
+            bottom: 44,
+            border: "1px solid rgba(216,183,126,0.20)",
+            borderRadius: 20,
+          }}
+        />
+        <CornerOrnament corner="tl" />
+        <CornerOrnament corner="tr" />
+        <CornerOrnament corner="bl" />
+        <CornerOrnament corner="br" />
+
+        {/* 背景爪印水印 */}
+        <div style={{ position: "absolute", top: 218, right: 78, opacity: 0.07, transform: "rotate(24deg)", display: "flex" }}>
+          <PawMark color={GOLD} size={2.4} />
+        </div>
+        <div style={{ position: "absolute", bottom: 470, left: 60, opacity: 0.06, transform: "rotate(-18deg)", display: "flex" }}>
+          <PawMark color={GOLD} size={1.8} />
+        </div>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ display: "flex", fontSize: 30, letterSpacing: 10, color: accent }}>
+          <div style={{ display: "flex", fontSize: 30, letterSpacing: 10, color: GOLD }}>
             本命猫深度报告
           </div>
           <div
             style={{
               display: "flex",
-              border: `2px solid ${accent}`,
               borderRadius: 999,
-              padding: "8px 24px",
+              padding: "10px 26px",
               fontSize: 24,
-              color: accent,
+              letterSpacing: 3,
+              color: INK,
+              backgroundImage: `linear-gradient(135deg, ${GOLD_LIGHT}, ${GOLD_DEEP})`,
             }}
           >
             付费定制版
@@ -137,76 +199,100 @@ export async function GET(
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            marginTop: 56,
+            marginTop: 64,
           }}
         >
-          <div style={{ display: "flex", fontSize: 36, color: "#8A7B68", letterSpacing: 8 }}>
+          <div style={{ display: "flex", fontSize: 30, color: MUTED, letterSpacing: 8 }}>
             我的猫系人格
           </div>
-          <div style={{ display: "flex", marginTop: 22, fontSize: 96, letterSpacing: 8 }}>
+          <div style={{ display: "flex", marginTop: 24, fontSize: 96, letterSpacing: 8, color: CREAM }}>
             {persona.title}
           </div>
-          <div style={{ display: "flex", marginTop: 24 }}>
-            <PawMark color={accent} />
+          <div style={{ display: "flex", marginTop: 32 }}>
+            <Divider />
           </div>
-          <div style={{ display: "flex", marginTop: 22, width: 132, height: 6, backgroundColor: accent, borderRadius: 6 }} />
-          <div style={{ display: "flex", marginTop: 28, fontSize: 36, color: "#8A7B68", letterSpacing: 6 }}>
+          <div style={{ display: "flex", marginTop: 32, fontSize: 30, color: MUTED, letterSpacing: 6 }}>
             本命猫
           </div>
-          <div style={{ display: "flex", marginTop: 12, fontSize: 70, color: accent, letterSpacing: 4 }}>
+          <div style={{ display: "flex", marginTop: 14, fontSize: 66, color: GOLD_LIGHT, letterSpacing: 4 }}>
             {persona.primaryBreed.name}
+          </div>
+          <div style={{ display: "flex", marginTop: 22, fontSize: 18, letterSpacing: 8, color: "rgba(201,185,159,0.65)" }}>
+            PREMIUM CUSTOM EDITION
           </div>
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 16,
-            marginTop: 48,
-          }}
-        >
+        {/* 定制亮点:2×2 宫格 */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 20, marginTop: 60 }}>
           {highlights.map((item) => (
             <div
               key={item.label}
               style={{
                 display: "flex",
                 flexDirection: "column",
-                borderRadius: 26,
-                backgroundColor: "#FFFFFF",
-                padding: "22px 30px",
-                border: "2px solid rgba(62,50,38,0.08)",
-                borderLeft: `8px solid ${accent}`,
+                width: 470,
+                borderRadius: 22,
+                backgroundColor: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(216,183,126,0.30)",
+                padding: "30px 30px",
               }}
             >
-              <div style={{ display: "flex", fontSize: 24, color: accent, letterSpacing: 4 }}>
-                {item.label}
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ display: "flex", width: 8, height: 8, backgroundColor: GOLD, transform: "rotate(45deg)" }} />
+                <div style={{ display: "flex", fontSize: 22, color: GOLD, letterSpacing: 4 }}>
+                  {item.label}
+                </div>
               </div>
-              <div style={{ display: "flex", marginTop: 10, fontSize: 34, lineHeight: 1.35, color: "#3E3226" }}>
+              <div style={{ display: "flex", marginTop: 14, fontSize: 32, lineHeight: 1.5, color: CREAM }}>
                 {item.value}
               </div>
             </div>
           ))}
         </div>
 
+        {/* 底部:专属签名区(左) + 二维码(右) */}
         <div
           style={{
             display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            // marginTop:auto 吸底;paddingTop 保证与面板区的最小间距,flexShrink:0 防止被挤压重叠
+            justifyContent: "space-between",
+            alignItems: "flex-end",
             marginTop: "auto",
-            paddingTop: 18,
+            paddingTop: 28,
             flexShrink: 0,
-            gap: 14,
           }}
         >
-          <div style={{ display: "flex", fontSize: 42, color: accent }}>
-            专属猫名: {highlights.catName}
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ display: "flex", fontSize: 24, color: MUTED, letterSpacing: 4 }}>
+              专属猫名
+            </div>
+            <div style={{ display: "flex", fontSize: 48, color: GOLD_LIGHT }}>
+              {highlights.catName}
+            </div>
+            <div style={{ display: "flex", fontSize: 24, color: MUTED, letterSpacing: 2, marginTop: 6 }}>
+              No.{serial} · 仅此一份
+            </div>
+            <div style={{ display: "flex", fontSize: 22, color: "rgba(201,185,159,0.75)", letterSpacing: 1 }}>
+              {siteShortLink()}
+            </div>
           </div>
-          <div style={{ display: "flex", fontSize: 28, color: "#8A7B68", letterSpacing: 4 }}>
-            No.{serial} · {siteShortLink()}
-          </div>
+          {qr ? (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                backgroundColor: "#FBF5EA",
+                borderRadius: 18,
+                border: "1px solid rgba(216,183,126,0.5)",
+                padding: "16px 16px 12px",
+              }}
+            >
+              <img src={qr} width={180} height={180} style={{ borderRadius: 6 }} />
+              <div style={{ display: "flex", marginTop: 10, fontSize: 17, color: "#6B5B45", letterSpacing: 2 }}>
+                扫码测测你的本命猫
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
     ),

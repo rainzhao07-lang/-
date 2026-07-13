@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { ImageResponse } from "next/og";
+import { shareCardQr } from "@/lib/card-qr";
 import { personaById, personas } from "@/lib/content";
 import { db } from "@/lib/db";
 import type { Persona } from "@/lib/types";
@@ -88,6 +89,7 @@ export async function GET(
 
   const { bg, accent } = persona.cardTheme;
   const serial = cardSerial(sessionId);
+  const qr = await shareCardQr({ dark: "#3E3226", light: "#FFFFFF" });
 
   return new ImageResponse(
     (
@@ -185,15 +187,44 @@ export async function GET(
           {`「${persona.verdict}」`}
         </div>
 
-        {/* 底部:短链 + 引流文案 */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-          <div style={{ display: "flex", fontSize: 34, letterSpacing: 5, color: "#5C5142" }}>
-            测测你内心住着哪只猫
+        {/* 底部:引流文案 + 短链(左) + 二维码(右);未配置站点地址时保持居中布局 */}
+        {qr ? (
+          <div style={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ display: "flex", fontSize: 34, letterSpacing: 5, color: "#5C5142" }}>
+                测测你内心住着哪只猫
+              </div>
+              <div style={{ display: "flex", fontSize: 28, color: "#8A7B68", letterSpacing: 2 }}>
+                {siteShortLink()}
+              </div>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                backgroundColor: "#FFFFFF",
+                borderRadius: 16,
+                border: `2px solid ${accent}44`,
+                padding: "12px 12px 8px",
+              }}
+            >
+              <img src={qr} width={132} height={132} style={{ borderRadius: 4 }} />
+              <div style={{ display: "flex", marginTop: 6, fontSize: 18, color: "#8A7B68", letterSpacing: 4 }}>
+                扫码直达
+              </div>
+            </div>
           </div>
-          <div style={{ display: "flex", fontSize: 28, color: "#8A7B68", letterSpacing: 2 }}>
-            {siteShortLink()}
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+            <div style={{ display: "flex", fontSize: 34, letterSpacing: 5, color: "#5C5142" }}>
+              测测你内心住着哪只猫
+            </div>
+            <div style={{ display: "flex", fontSize: 28, color: "#8A7B68", letterSpacing: 2 }}>
+              {siteShortLink()}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     ),
     {
