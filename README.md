@@ -36,7 +36,7 @@ npm run check   # typecheck + 单测 + build,提交前必须全绿
 | `SHARED_ACCESS_CODE_SECRET` | 限时共享兑换码的签名密钥,使用与 `ADMIN_SECRET` 不同的强随机串 |
 | `SHARED_ACCESS_WINDOW_MINUTES` | 共享码轮换周期,正式日码设为 `1440` |
 | `SHARED_DAILY_LIMIT` | 共享码每个窗口的核销上限;留空或 `0` 表示不限 |
-| `NEXT_PUBLIC_PAY_URL` | **生产必填。换收款链接只改这一个值**:面包多/发卡网商品页地址；缺失时构建会输出上线阻塞警告 |
+| `NEXT_PUBLIC_PAY_URL` | **生产必填。换购买入口只改这一个值**:当前为挂有商品入口的小红书笔记地址；缺失时构建会输出上线阻塞警告 |
 | `NEXT_PUBLIC_SITE_URL` | 正式域名,用于分享卡短链与 og 分享 |
 
 ## 上线前必查
